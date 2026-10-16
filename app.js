@@ -1,4 +1,3 @@
-
 'use strict';
 /* KasHima interactive concept. State is local to browser. Not a production financial system. */
 const KEY='kashima-premium-preview-2026-v1'; // Keep existing local profiles when redesigning the demo.
@@ -95,38 +94,52 @@ let db;try{db=JSON.parse(localStorage.getItem(KEY)||'null')||seed();if(!db.users
 if(db.sessionActive===undefined)db.sessionActive=true;db.users.forEach(u=>{if(!u.nickname)u.nickname=u.name.split(' ')[0]||'Anggota'});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){console.warn('Penyimpanan browser penuh',e)}}
 function user(){return db.users.find(u=>u.id===db.userId)||db.users[0]}
-const GLASS_STYLES={"none":{"name":"Solid","blur":0,"description":"Tanpa kaca; paling hemat daya"},"satin":{"name":"Satin","blur":8,"description":"Lembut dan nyaris solid"},"frost":{"name":"Frost","blur":16,"description":"Kaca matte seimbang"},"crystal":{"name":"Crystal","blur":22,"description":"Lebih transparan dengan kilau halus"}};
+// Glass Studio: personal appearance is stored on the active demo profile.
+const GLASS_PRESETS={
+  none:{name:'Solid',blur:0,description:'Tanpa efek kaca; paling hemat daya.'},
+  satin:{name:'Satin',blur:8,description:'Hampir solid. Halus dan tenang.'},
+  frost:{name:'Frost',blur:16,description:'Kaca buram seimbang untuk keseharian.'},
+  crystal:{name:'Crystal',blur:22,description:'Kaca lebih jernih dengan pantulan cahaya.'}
+};
 function glassPrefs(){
  const u=user();
- if(!u.appearance||typeof u.appearance!=="object")u.appearance={glassStyle:"frost",glassBlur:16};
- if(!Object.hasOwn(GLASS_STYLES,u.appearance.glassStyle))u.appearance.glassStyle="frost";
- const n=Number(u.appearance.glassBlur);
- u.appearance.glassBlur=Number.isFinite(n)?Math.max(0,Math.min(28,Math.round(n/2)*2)):16;
+ if(!u.appearance||typeof u.appearance!=='object')u.appearance={glassStyle:'frost',glassBlur:16};
+ if(!(u.appearance.glassStyle in GLASS_PRESETS))u.appearance.glassStyle='frost';
+ const raw=Number(u.appearance.glassBlur);
+ u.appearance.glassBlur=Number.isFinite(raw)?Math.max(0,Math.min(28,Math.round(raw/2)*2)):16;
  return u.appearance;
 }
 function applyGlass(){
- const pref=glassPrefs(),root=document.documentElement;
- root.dataset.glass=pref.glassStyle;
- root.style.setProperty("--glass-blur",`${pref.glassStyle==="none"?0:pref.glassBlur}px`);
+ const {glassStyle,glassBlur}=glassPrefs();
+ const root=document.documentElement;
+ root.dataset.glass=glassStyle;
+ root.style.setProperty('--glass-blur',`${glassStyle==='none'?0:glassBlur}px`);
+ root.style.setProperty('--glass-blur-number',glassStyle==='none'?'0':String(glassBlur));
 }
 function setGlassPreset(style){
- if(!Object.hasOwn(GLASS_STYLES,style))return;
- const pref=glassPrefs();pref.glassStyle=style;
- if(style!=="none")pref.glassBlur=GLASS_STYLES[style].blur;
+ if(!(style in GLASS_PRESETS))return;
+ const prefs=glassPrefs();
+ prefs.glassStyle=style;
+ if(style!=='none')prefs.glassBlur=GLASS_PRESETS[style].blur;
  applyGlass();save();render(false);
- toast(style==="none"?"Efek kaca dimatikan.":`Gaya ${GLASS_STYLES[style].name} diterapkan untuk akun ini.`);
+ toast(style==='none'?'Glassmorphism dimatikan.':`Gaya ${GLASS_PRESETS[style].name} diterapkan untuk akun ini.`);
 }
-function setGlassBlur(value){
+function setGlassBlur(value,commit=false){
  const n=Number(value);if(!Number.isFinite(n))return;
- const pref=glassPrefs();if(pref.glassStyle==="none")return;
- pref.glassBlur=Math.max(0,Math.min(28,Math.round(n/2)*2));
- applyGlass();save();
- const label=document.getElementById("glass-blur-value");
- if(label)label.textContent=`${pref.glassBlur} px`;
- const mirror=document.getElementById("glass-current-strength");
- if(mirror)mirror.textContent=`${pref.glassBlur} px`;
- const slider=document.getElementById("glass-blur-slider");
- if(slider)slider.style.setProperty("--range-progress",`${pref.glassBlur/28*100}%`);
+ const prefs=glassPrefs();
+ prefs.glassBlur=Math.max(0,Math.min(28,Math.round(n/2)*2));
+ if(prefs.glassStyle==='none'&&prefs.glassBlur>0) prefs.glassStyle='frost';
+ applyGlass();
+ const label=document.getElementById('glass-blur-value');
+ if(label)label.textContent=`${prefs.glassBlur} px`;
+ const mirror=document.getElementById('glass-current-strength');
+ if(mirror)mirror.textContent=`${prefs.glassBlur} px`;
+ const control=document.getElementById('glass-blur-slider');
+ if(control){control.style.setProperty('--range-progress',`${prefs.glassBlur/28*100}%`);control.setAttribute('aria-valuetext',`${prefs.glassBlur} piksel blur`)}
+ const surface=document.getElementById('glass-visual');
+ if(surface){surface.dataset.liveBlur=String(prefs.glassBlur);surface.setAttribute('aria-label',`Pratinjau efek kaca dengan blur ${prefs.glassBlur} piksel`)}
+ document.querySelectorAll('[data-action="glass-preset"]').forEach(el=>{const selected=el.dataset.id===prefs.glassStyle;el.setAttribute('aria-pressed',String(selected));el.classList.toggle('is-selected',selected)});
+ if(commit)save();
 }
 applyGlass();
 
@@ -150,7 +163,15 @@ const navMember=[['Beranda','/app','house'],['Leaderboard','/app/leaderboard','t
 const navStaff=[['Ringkasan','/pengurus/keuangan','house'],['Verifikasi','/pengurus/verifikasi','checkbook'],['Anggota','/pengurus/anggota','users'],['Tunggakan','/pengurus/tunggakan','alert'],['Reminder','/pengurus/reminder','send'],['Buku kas','/pengurus/buku-kas','receipt'],['Laporan','/pengurus/laporan','chart'],['Sengketa','/pengurus/sengketa','help']];
 const navChair=[['Persetujuan','/pengurus/persetujuan','shield'],['Periode','/pengurus/periode','calendar'],['Keanggotaan','/pengurus/keanggotaan','users'],['Kebijakan','/pengurus/kebijakan','settings'],['Hak akses','/pengurus/akses','lock'],['Audit & operasi','/pengurus/audit','clipboard']];
 function route(){return decodeURI((location.hash||'#/app').slice(1).split('?')[0])}
-function head(title,subtitle='',extra=''){const r=route(),section=r.startsWith('/pengurus/')?'PENGELOLAAN':'PERSONAL',per=hasStaff()?'2026 / 27':'2026';return `<div class="page-head"><div><div class="eyebrow page-index">KASHIMA <span class="slash">/</span> ${section} <span class="slash">/</span> ${per}</div><h1>${esc(title)}</h1>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra?`<div class="page-side">${extra}</div>`:''}</div>`}
+function staffToolsNav(r){
+ const items=[['Ringkasan','/pengurus/keuangan'],['Verifikasi','/pengurus/verifikasi'],['Anggota','/pengurus/anggota'],['Tunggakan','/pengurus/tunggakan'],['Reminder','/pengurus/reminder'],['Buku kas','/pengurus/buku-kas'],['Laporan','/pengurus/laporan'],['Sengketa','/pengurus/sengketa']];
+ if(isChair())items.push(['Persetujuan','/pengurus/persetujuan'],['Periode','/pengurus/periode'],['Keanggotaan','/pengurus/keanggotaan'],['Kebijakan','/pengurus/kebijakan'],['Hak akses','/pengurus/akses'],['Audit','/pengurus/audit']);
+ return `<nav class="staff-shortcuts" aria-label="Fitur pengurus">${items.map(([name,href])=>`<a href="#${href}" ${r===href||r.startsWith(href+'/')?'aria-current="page"':''} class="${r===href||r.startsWith(href+'/')?'is-active':''}">${name}</a>`).join('')}</nav>`;
+}
+function head(title,subtitle='',extra=''){
+ const r=route(),staff=r.startsWith('/pengurus/');
+ return `<div class="page-head ${staff?'staff-page-head':''}"><div>${!staff?`<div class="eyebrow page-index">KASHIMA <span class="slash">/</span> PERSONAL</div>`:''}<h1>${esc(title)}</h1>${subtitle?`<p>${subtitle}</p>`:''}</div>${extra?`<div class="page-side">${extra}</div>`:''}</div>${staff?staffToolsNav(r):''}`;
+}
 function labelRow(title,link='',label='Lihat semua'){return `<div class="label-row"><h2>${title}</h2>${link?`<a class="link-arrow" href="#${link}">${label} ${icon('arrow-right')}</a>`:''}</div>`}
 function demoStrip(){return `<div class="demo-strip"><span class="demo-dot"></span><b>MODE PRATINJAU</b><span>Data contoh, bukan catatan pembayaran nyata.</span></div>`}
 function nlink(item,r){const active=r===item[1]||r.startsWith(item[1]+'/')&&item[1]!='/app';return `<a class="side-link ${active?'active':''}" href="#${item[1]}">${icon(item[2])}<span>${item[0]}</span></a>`}
@@ -181,58 +202,85 @@ function profilePage(){
  const statCaption=me.role==='chair'?'Usulan menunggu keputusan':me.role==='treasurer'?'Pengajuan menunggu verifikasi':'Pembayaran kas tercatat pada data demo';
  return `${demoStrip()}
  <main class="account-page role-${me.role}" aria-labelledby="account-heading">
-  <header class="account-heading">
-   <div><span class="account-kicker">KASHIMA <span aria-hidden="true">/</span> AKUN PRIBADI</span><h1 id="account-heading">Profil <em>saya.</em></h1><p>Identitas dan aksesmu, tertata dalam satu tempat.</p></div>
-   <span class="account-period">PERIODE <strong>2026 / 27</strong></span>
-  </header>
-  <section class="account-overview" aria-label="Identitas utama">
-   <div class="account-portrait">
-    <button class="identity-avatar" type="button" data-action="pick-avatar" aria-label="Ganti foto profil">${me.avatar?`<img src="${me.avatar}" alt="Foto profil ${esc(me.name)}"/>`:`<span>${esc(initials(me.name))}</span>`}<span class="identity-avatar-camera">${icon('camera')}</span></button>
+   <header class="account-heading">
+    <div><span class="account-kicker">KASHIMA <span aria-hidden="true">/</span> AKUN PRIBADI</span><h1 id="account-heading">Profil <em>saya.</em></h1><p>Identitas dan aksesmu, tertata dalam satu tempat.</p></div>
+    <span class="account-period">PERIODE <strong>2026 / 27</strong></span>
+   </header>
+   <section class="account-overview" aria-label="Identitas utama">
+    <div class="account-portrait">
+      <button class="identity-avatar" type="button" data-action="pick-avatar" aria-label="Ganti foto profil">${me.avatar?`<img src="${me.avatar}" alt="Foto profil ${esc(me.name)}"/>`:`<span>${esc(initials(me.name))}</span>`}<span class="identity-avatar-camera">${icon('camera')}</span></button>
+    </div>
+    <div class="account-name-wrap"><p class="account-role-line"><span class="account-role-dot" aria-hidden="true"></span>${esc(role)} <span class="account-role-divider" aria-hidden="true">/</span> Himpunan Mahasiswa</p><h2>${esc(me.name)}</h2><p class="account-nickname">Panggil saja <strong>${esc(welcomeName(me))}</strong></p><p class="account-nim">NIM ${esc(me.nim)} <span aria-hidden="true">·</span> Angkatan ${esc(me.year)}</p></div>
+    <div class="account-portrait-actions"><button type="button" class="account-action-link" data-action="pick-avatar">${icon('camera')} ${me.avatar?'Ganti foto':'Tambah foto'}</button>${me.avatar?`<button type="button" class="account-action-link account-action-remove" data-action="remove-avatar">${icon('trash')} Hapus foto</button>`:''}</div>
+    <input id="avatar-picker" type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Pilih foto profil">
+   </section>
+   <div class="account-layout">
+    <div class="account-primary">
+      <section class="account-section account-personal" aria-labelledby="account-personal-title"><div class="account-section-heading"><div><span class="account-section-index">01 / IDENTITAS</span><h3 id="account-personal-title">Informasi diri</h3></div><button type="button" class="account-edit-link" data-action="edit-profile">Ubah identitas ${icon('arrow-right')}</button></div>
+       <div class="account-info-list"><div class="profile-information-row"><span>Nama lengkap</span><strong>${esc(me.name)}</strong></div><div class="profile-information-row"><span>Nama panggilan</span><strong>${esc(welcomeName(me))}</strong></div><div class="profile-information-row"><span>NIM</span><strong class="tabular">${esc(me.nim)}</strong></div><div class="profile-information-row"><span>Angkatan</span><strong>${esc(me.year)}</strong></div><div class="profile-information-row"><span>Peran aktif</span><strong>${esc(role)}</strong></div></div>
+      </section>
+      <section class="account-section account-shortcuts" aria-labelledby="account-shortcuts-title"><div class="account-section-heading"><div><span class="account-section-index">02 / NAVIGASI</span><h3 id="account-shortcuts-title">Akses cepat ${staff?'pengurus':'pribadi'}</h3></div></div><div class="profile-quicklinks">${quick.map(x=>`<a class="profile-quicklink" href="#${x[1]}"><span class="account-shortcut-icon">${icon(x[2])}</span><span class="quick-label">${x[0]}</span>${icon('arrow-right')}</a>`).join('')}</div></section>
+    </div>
+    <aside class="account-secondary" aria-label="Ringkasan dan keamanan akun">
+      <section class="profile-stats account-summary" aria-label="Ringkasan akun"><span class="account-section-index">${staff?'STATUS PENGURUS':'RINGKASAN AKUN'}</span><div class="account-summary-main"><span class="profile-stat-value">${stat} <span class="serif">${staff?'agenda':'bulan'}</span></span><p class="profile-stat-caption">${statCaption}</p></div><div class="account-summary-sub"><div class="profile-stat-line"><span>${staff?'Status akses':'Peringkat Oktober'}</span><strong>${staff?'Aktif · '+esc(role):rank?'#'+rank:'Belum masuk'}</strong></div><div class="profile-stat-line"><span>${staff?'Periode':'Tagihan terbuka'}</span><strong>${staff?'2026 / 2027':rp(totalDue())}</strong></div></div></section>
+      <section class="profile-security account-security" aria-labelledby="account-security-title"><div class="account-section-heading"><div><span class="account-section-index">03 / AKUN</span><h3 id="account-security-title">Keamanan & preferensi</h3></div></div><a href="#/app/pengaturan" class="settings-item"><span>${icon('settings')} Pengaturan tampilan</span>${icon('chevron-right')}</a><a href="#/app/bantuan" class="settings-item"><span>${icon('help')} Bantuan akun</span>${icon('chevron-right')}</a><button type="button" class="settings-item profile-switch" data-action="switch-user"><span>${icon('arrows')} Ganti akun demo</span>${icon('chevron-right')}</button><button type="button" class="profile-logout" data-action="logout">${icon('logout')} Keluar dari akun ${icon('arrow-right')}</button><p class="profile-privacy-note">${icon('lock')} Perubahan profil hanya disimpan pada browser demo ini, tidak tersinkron ke perangkat lain.</p></section>
+    </aside>
    </div>
-   <div class="account-name-wrap"><p class="account-role-line"><span class="account-role-dot" aria-hidden="true"></span>${esc(role)} <span class="account-role-divider" aria-hidden="true">/</span> Himpunan Mahasiswa</p><h2>${esc(me.name)}</h2><p class="account-nickname">Panggil saja <strong>${esc(welcomeName(me))}</strong></p><p class="account-nim">NIM ${esc(me.nim)} <span aria-hidden="true">·</span> Angkatan ${esc(me.year)}</p></div>
-   <div class="account-portrait-actions"><button type="button" class="account-action-link" data-action="pick-avatar">${icon('camera')} ${me.avatar?'Ganti foto':'Tambah foto'}</button>${me.avatar?`<button type="button" class="account-action-link account-action-remove" data-action="remove-avatar">${icon('trash')} Hapus foto</button>`:''}</div>
-   <input id="avatar-picker" type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Pilih foto profil">
-  </section>
-  <div class="account-layout">
-   <div class="account-primary">
-    <section class="account-section account-personal" aria-labelledby="account-personal-title">
-     <div class="account-section-heading"><div><span class="account-section-index">01 / IDENTITAS</span><h3 id="account-personal-title">Informasi diri</h3></div><button type="button" class="account-edit-link" data-action="edit-profile">Ubah identitas ${icon('arrow-right')}</button></div>
-     <div class="account-info-list"><div class="profile-information-row"><span>Nama lengkap</span><strong>${esc(me.name)}</strong></div><div class="profile-information-row"><span>Nama panggilan</span><strong>${esc(welcomeName(me))}</strong></div><div class="profile-information-row"><span>NIM</span><strong class="tabular">${esc(me.nim)}</strong></div><div class="profile-information-row"><span>Angkatan</span><strong>${esc(me.year)}</strong></div><div class="profile-information-row"><span>Peran aktif</span><strong>${esc(role)}</strong></div></div>
-    </section>
-    <section class="account-section account-shortcuts" aria-labelledby="account-shortcuts-title">
-     <div class="account-section-heading"><div><span class="account-section-index">02 / NAVIGASI</span><h3 id="account-shortcuts-title">Akses cepat ${staff?'pengurus':'pribadi'}</h3></div></div>
-     <div class="profile-quicklinks">${quick.map(x=>`<a class="profile-quicklink" href="#${x[1]}"><span class="account-shortcut-icon">${icon(x[2])}</span><span class="quick-label">${x[0]}</span>${icon('arrow-right')}</a>`).join('')}</div>
-    </section>
-   </div>
-   <aside class="account-secondary" aria-label="Ringkasan dan keamanan akun">
-    <section class="profile-stats account-summary" aria-label="Ringkasan akun"><span class="account-section-index">${staff?'STATUS PENGURUS':'RINGKASAN AKUN'}</span><div class="account-summary-main"><span class="profile-stat-value">${stat} <span class="serif">${staff?'agenda':'bulan'}</span></span><p class="profile-stat-caption">${statCaption}</p></div><div class="account-summary-sub"><div class="profile-stat-line"><span>${staff?'Status akses':'Peringkat Oktober'}</span><strong>${staff?'Aktif · '+esc(role):rank?'#'+rank:'Belum masuk'}</strong></div><div class="profile-stat-line"><span>${staff?'Periode':'Tagihan terbuka'}</span><strong>${staff?'2026 / 2027':rp(totalDue())}</strong></div></div></section>
-    <section class="profile-security account-security" aria-labelledby="account-security-title">
-     <div class="account-section-heading"><div><span class="account-section-index">03 / AKUN</span><h3 id="account-security-title">Keamanan & preferensi</h3></div></div>
-     <a href="#/app/pengaturan" class="settings-item"><span>${icon('settings')} Pengaturan tampilan</span>${icon('chevron-right')}</a><a href="#/app/bantuan" class="settings-item"><span>${icon('help')} Bantuan akun</span>${icon('chevron-right')}</a><button type="button" class="settings-item profile-switch" data-action="switch-user"><span>${icon('arrows')} Ganti akun demo</span>${icon('chevron-right')}</button>
-     <button type="button" class="profile-logout" data-action="logout">${icon('logout')} Keluar dari akun ${icon('arrow-right')}</button>
-     <p class="profile-privacy-note">${icon('lock')} Perubahan profil hanya disimpan pada browser demo ini, tidak tersinkron ke perangkat lain.</p>
-    </section>
-   </aside>
-  </div>
  </main>`;
 }
-
 function glassStudio(){
- const pref=glassPrefs(),off=pref.glassStyle==="none",current=GLASS_STYLES[pref.glassStyle];
- const choices=[["none","Solid","Tanpa blur"],["satin","Satin","Halus & lembut"],["frost","Frost","Seimbang"],["crystal","Crystal","Lebih jernih"]];
- return `<section class="glass-studio" aria-labelledby="glass-studio-heading">
- <div class="glass-studio-head"><div><span class="eyebrow">PERSONALISASI VISUAL / GLASS STUDIO</span><h2 id="glass-studio-heading">Tentukan karakter <em>kacamu.</em></h2><p>Pilih jenis kaca, lalu geser tingkat blur. Perubahan langsung terlihat pada antarmukamu.</p></div><span class="glass-monogram" aria-hidden="true">g.</span></div>
- <div class="glass-presets" role="group" aria-label="Jenis glassmorphism">${choices.map(([id,name,detail])=>`<button class="glass-preset ${pref.glassStyle===id?"chosen":""}" data-action="glass-preset" data-id="${id}" type="button" aria-pressed="${pref.glassStyle===id}"><span class="glass-preset-sample sample-${id}" aria-hidden="true"><span></span></span><strong>${name}</strong><small>${detail}</small>${pref.glassStyle===id?`<span class="glass-check">${icon("check")}</span>`:""}</button>`).join("")}</div>
- <div class="glass-control"><div class="glass-control-top"><div><strong>Tingkat blur</strong><p>Seberapa buram lapisan kaca di seluruh website.</p></div><output id="glass-blur-value" for="glass-blur-slider">${off?0:pref.glassBlur} px</output></div><input id="glass-blur-slider" type="range" min="0" max="28" step="2" value="${pref.glassBlur}" ${off?"disabled":""} aria-label="Tingkat blur glassmorphism" aria-describedby="glass-blur-desc" style="--range-progress:${pref.glassBlur/28*100}%"><div class="glass-range-labels"><span>Jernih</span><span>Buram</span></div><p id="glass-blur-desc" class="glass-hint">${off?"Pilih Satin, Frost atau Crystal untuk mengatur blur.":"Disimpan otomatis untuk "+esc(welcomeName(user()))+"."}</p></div>
- <div class="glass-demo-scene" aria-label="Pratinjau material kaca secara langsung"><div class="glass-orbit"></div><div class="glass-demo-top"><span>LIVE PREVIEW <span class="glass-dot"></span></span><span>${esc(roleName(user().role).toUpperCase())} EDITION</span></div><div class="glass-demo-panel"><span>RUANG PRIBADI</span><h3>Ruang yang terasa <em>milikmu.</em></h3><div class="glass-demo-panel-foot"><span>${current.name} / <span id="glass-current-strength">${off?0:pref.glassBlur} px</span></span>${icon("sparkle-2")}</div></div><p class="glass-demo-caption">Contoh efek pada panel dan navigasi.</p></div>
- <p class="glass-a11y-note">${icon("info")}<span>Glassmorphism hanya digunakan pada permukaan pilihan. Nominal, QR, dan teks tetap tajam. Perangkat yang mengurangi transparansi mendapat tampilan lebih solid.</span></p>
- </section>`;
+ const {glassStyle,glassBlur}=glassPrefs();
+ const modes=[['none','Solid'],['satin','Satin'],['frost','Frost'],['crystal','Crystal']];
+ const strength=glassStyle==='none'?0:glassBlur;
+ return `<section class="settings-section glass-editor" aria-labelledby="glass-studio-heading">
+   <div class="settings-section-head"><div><span class="eyebrow">MATERIAL</span><h2 id="glass-studio-heading">Glass Studio</h2><p>Pilih karakter kaca yang paling nyaman buatmu.</p></div><span class="glass-current-badge">PERSONAL</span></div>
+   <div class="glass-mode-select" role="group" aria-label="Jenis efek kaca">${modes.map(([id,label])=>`<button type="button" class="glass-mode ${glassStyle===id?'is-selected':''}" data-action="glass-preset" data-id="${id}" aria-pressed="${glassStyle===id}"><span class="glass-mode-swatch sample-${id}" aria-hidden="true"></span><span>${label}</span></button>`).join('')}</div>
+   <div class="glass-adjust"><div class="glass-adjust-label"><label for="glass-blur-slider">Tingkat blur</label><output id="glass-blur-value" for="glass-blur-slider">${strength} px</output></div><input id="glass-blur-slider" type="range" min="0" max="28" step="2" value="${strength}" aria-label="Tingkat blur glassmorphism" aria-valuetext="${strength} piksel blur" style="--range-progress:${strength/28*100}%"><div class="glass-ticks"><span>0 · Jernih</span><span>28 · Buram</span></div><p class="glass-blur-help">Geser lingkaran pada garis. Perubahan langsung diterapkan dan disimpan untuk akun demo ini.</p></div>
+   <div class="glass-compare"><div id="glass-visual" class="glass-visual" role="img" aria-label="Pratinjau efek kaca dengan blur ${strength} piksel"><div class="glass-art glass-art-one"></div><div class="glass-art glass-art-two"></div><div class="glass-art glass-art-three"></div><div class="glass-overlay"><span class="glass-demo-label">LIVE MATERIAL</span><strong>Serasa milikmu.</strong><span class="glass-demo-line">Preview blur <span id="glass-current-strength">${strength} px</span></span></div></div><p>Pratinjau perubahan di atas. Pada aplikasi, kaca digunakan di navbar dan lapisan antarmuka, sementara teks transaksi tetap tajam.</p></div>
+   </section>`;
 }
-function settingsPage(){const dark=db.theme==='dark';return `${demoStrip()}${head('Pengaturan','Sesuaikan kenyamanan dan preferensimu.')}<div class="grid-main"><div class="stack"><div class="paper"><div class="eyebrow">TAMPILAN</div><div class="settings-item"><div><strong>Mode gelap</strong><div class="row-meta">Mode terang digunakan secara default.</div></div><button type="button" class="toggle ${dark?'on':''}" aria-label="Aktifkan mode gelap" aria-pressed="${dark}" data-action="toggle-theme"></button></div><div class="settings-item"><div><strong>Notifikasi pengingat</strong><div class="row-meta">Keterangan jatuh tempo di dalam website.</div></div><button type="button" class="toggle ${db.prefs.quiet?'on':''}" aria-label="Aktifkan notifikasi pengingat" aria-pressed="${db.prefs.quiet}" data-action="toggle-pref" data-key="quiet"></button></div></div>${glassStudio()}<div class="paper"><div class="eyebrow">KEAMANAN AKUN</div><div class="settings-item"><div><strong>Kata sandi</strong><div class="row-meta">Penggantian password asli belum tersedia dalam demo.</div></div><button class="btn btn-outline btn-small" data-action="password-info">Kelola</button></div><div class="settings-item"><div><strong>Privasi ranking</strong><div class="row-meta">Pengaturan ini disimpan pada perangkat demo.</div></div><button class="toggle ${user().anonymous?'on':''}" data-action="toggle-pref" data-key="anonymous" aria-pressed="${user().anonymous}" aria-label="Sembunyikan identitas publik"></button></div></div></div><aside class="stack"><div class="paper"><div class="eyebrow">SESI PRATINJAU</div><h3 style="margin:16px 0 7px">${esc(user().name)}</h3><p class="muted" style="font-size:12px">Kamu dapat mengganti peran untuk mencoba dashboard pengurus.</p><button class="btn btn-primary btn-block" style="margin-top:20px" data-action="switch-user">${icon('arrows')} Ganti akun demo</button><button class="btn btn-outline btn-block" style="margin-top:9px" data-action="reset-demo">${icon('history')} Atur ulang data demo</button></div></aside></div>`}
+function settingsPage(){
+ const dark=db.theme==='dark';
+ const me=user();
+ return `${demoStrip()}<div class="settings-view"><header class="settings-intro"><span class="eyebrow">RUANG PRIBADI / ${esc(roleName(me.role).toUpperCase())}</span><h1>Pengaturan<span class="serif">.</span></h1><p>Sesuaikan tampilan dan akunmu, tanpa hal yang berlebihan.</p></header>
+  <div class="settings-layout"><div class="settings-main">
+   <section class="settings-section" aria-labelledby="settings-appearance"><div class="settings-section-head"><div><span class="eyebrow">01 / PREFERENSI</span><h2 id="settings-appearance">Tampilan & kenyamanan</h2></div></div>
+    <div class="settings-row"><div><strong>Mode gelap</strong><p>Gunakan tampilan gelap saat diperlukan.</p></div><button type="button" class="toggle ${dark?'on':''}" aria-label="Mode gelap" aria-pressed="${dark}" data-action="toggle-theme"></button></div>
+    <div class="settings-row"><div><strong>Notifikasi pengingat</strong><p>Pengingat jatuh tempo di dalam aplikasi.</p></div><button type="button" class="toggle ${db.prefs.quiet?'on':''}" aria-label="Notifikasi pengingat" aria-pressed="${db.prefs.quiet}" data-action="toggle-pref" data-key="quiet"></button></div>
+   </section>
+   ${glassStudio()}
+   <section class="settings-section" aria-labelledby="settings-privacy"><div class="settings-section-head"><div><span class="eyebrow">02 / AKUN</span><h2 id="settings-privacy">Keamanan & privasi</h2></div></div>
+    <div class="settings-row"><div><strong>Privasi leaderboard</strong><p>Sembunyikan namamu dari peringkat publik.</p></div><button class="toggle ${me.anonymous?'on':''}" type="button" data-action="toggle-pref" data-key="anonymous" aria-pressed="${Boolean(me.anonymous)}" aria-label="Sembunyikan nama dari leaderboard"></button></div>
+    <div class="settings-row"><div><strong>Kata sandi</strong><p>Kelola keamanan login akun KasHima.</p></div><button class="settings-inline-action" data-action="password-info">Kelola ${icon('chevron-right')}</button></div>
+   </section>
+  </div><aside class="settings-aside"><div class="settings-identity"><div class="settings-identity-top">${avatar(me,'settings-photo')}<div><span class="eyebrow">AKUN AKTIF</span><strong>${esc(me.name)}</strong><small>${esc(roleName(me.role))} · ${esc(me.nim)}</small></div></div><a href="#/app/profil" class="settings-account-link">Lihat profil ${icon('arrow-right')}</a></div><div class="settings-demo-controls"><span class="eyebrow">PRATINJAU</span><button class="settings-plain-action" data-action="switch-user">${icon('arrows')} Ganti akun demo ${icon('chevron-right')}</button><button class="settings-plain-action" data-action="reset-demo">${icon('history')} Atur ulang data demo ${icon('chevron-right')}</button></div><div class="settings-footnote">Setiap akun contoh menyimpan pilihan kaca berbeda di browser ini. Sinkronisasi lintas perangkat menunggu backend produksi.</div></aside></div></div>`;
+}
 function helpPage(){const myTickets=db.tickets.filter(t=>t.userId===user().id);const faqs=[['Mengapa ada denda?','Aturan contoh menetapkan denda untuk setiap iuran bulanan yang melewati tanggal 15. Nilai final tetap perlu disahkan pengurus.'],['Apakah QR ini bisa digunakan membayar?','Belum. QR yang ada dalam prototipe merupakan ilustrasi. Pembayaran asli membutuhkan QR merchant resmi dan sumber status pembayaran yang sah.'],['Kapan status berubah menjadi lunas?','Dalam demo setelah bendahara menyetujui simulasi. Pada produksi, status harus berasal dari bukti penerimaan dana yang dapat dipertanggungjawabkan.'],['Bagaimana jika data saya tidak sesuai?','Buat tiket laporan masalah. Bendahara dapat meninjau dan mengajukan koreksi dengan alasan.']];return `${demoStrip()}${head('Pusat bantuan','Kalau ada yang tidak sesuai, sampaikan di sini.')}<div class="grid-main"><div class="stack"><section>${labelRow('Pertanyaan yang sering muncul')}<div class="paper">${faqs.map(([q,a],i)=>`<details class="settings-item" style="display:block"><summary style="cursor:pointer;list-style:none;font-weight:700">${esc(q)} <span style="float:right">${icon('chevron-down')}</span></summary><p class="muted" style="font-size:12px;margin:12px 5px 2px">${esc(a)}</p></details>`).join('')}</div></section><section>${labelRow('Laporan saya')}<div class="paper">${myTickets.length?myTickets.map(t=>`<div class="list-row"><div><strong>${esc(t.title)}</strong><div class="row-meta">${esc(t.id)} · ${shortDate(t.createdAt)}</div></div>${badgeStatus(t.status)}</div>`).join(''):`<div class="empty">${icon('help')}<strong>Belum ada laporan</strong><p>Ketika kamu mengirim masalah, statusnya akan muncul di sini.</p></div>`}</div></section></div><aside><div class="paper"><div class="eyebrow">BUTUH PENINJAUAN?</div><h2 style="margin:13px 0">Ceritakan yang terjadi.</h2><p class="muted" style="font-size:12px">Misalnya nominal salah, denda tidak sesuai, atau pembayaran belum tercatat.</p><button class="btn btn-primary btn-block" style="margin-top:20px" data-action="new-ticket">${icon('plus')} Buat laporan</button></div></aside></div>`}
 function staffStats(){const due=db.obligations.filter(o=>o.status==='due'&&o.month==='2026-10');return {due:due.length,review:db.intents.filter(t=>t.status==='pending').length,arrears:[...new Set(db.obligations.filter(o=>o.status==='due'&&o.month<'2026-10').map(o=>o.userId))].length,collected:db.payments.filter(p=>p.obligationIds.some(id=>db.obligations.find(o=>o.id===id)?.month==='2026-10')).reduce((a,x)=>a+x.amount,0)}}
-function staffDashboard(){const st=staffStats();const reviews=db.intents.filter(x=>x.status==='pending');return `${demoStrip()}${head(isChair()?'Ruang kepemimpinan':'Ruang bendahara',isChair()?'Lihat gambaran kas dan persetujuan yang membutuhkan perhatian.':'Prioritaskan verifikasi dan pencatatan kas yang perlu diselesaikan.')}<div class="banner-dark"><div><div class="eyebrow" style="color:#b8d3c4">RUANG KERJA / OKTOBER 2026</div><h2>${isChair()?'Keputusan yang baik, dimulai dari data yang jernih.':'Setiap transaksi, diperiksa dengan teliti.'}</h2><p>${st.review} pengajuan menunggu peninjauan. Pembayaran hanya sah setelah bukti sesuai.</p></div><div style="display:grid;gap:7px"><a href="#${isChair()?'/pengurus/persetujuan':'/pengurus/verifikasi'}" class="btn">${isChair()?'Pusat persetujuan':'Buka antrean'} ${icon('arrow-right')}</a><button class="btn btn-outline btn-small" style="background:transparent;color:white;border-color:#67867d" data-action="propose-policy">Usulkan kebijakan</button></div></div><div style="height:25px"></div><div class="staff-focus"><article><span class="eyebrow">PERLU VERIFIKASI</span><div class="number">${st.review}</div><span class="sub">Pengajuan tertunda</span></article><article><span class="eyebrow">BELUM BAYAR</span><div class="number">${st.due}</div><span class="sub">Anggota bulan ini</span></article><article><span class="eyebrow">TUNGGAKAN LAMA</span><div class="number">${st.arrears}</div><span class="sub">Anggota terdampak</span></article></div><div class="grid-main section"><section>${labelRow('Antrean verifikasi','/pengurus/verifikasi','Lihat antrean')}<div class="paper">${reviews.length?reviews.slice(0,5).map(t=>{const u=db.users.find(x=>x.id===t.userId);return `<div class="list-row"><div class="row-main">${avatar(u)}<div><div class="row-title">${esc(u.name)}</div><div class="row-meta">${esc(t.id)} · ${shortDate(t.createdAt)}</div></div></div><div class="row-right"><div class="row-amount">${rp(t.amount)}</div><a class="link-arrow" href="#/pengurus/verifikasi/${t.id}">Periksa ${icon('chevron-right')}</a></div></div>`}).join(''):`<div class="empty">${icon('check-circle')}<strong>Antrean bersih</strong><p>Tidak ada pengajuan yang menunggu pemeriksaan.</p></div>`}</div></section><aside class="stack"><div class="paper"><span class="eyebrow">PENERIMAAN KAS OKTOBER</span><div class="metric-value" style="margin:18px 0">${rp(st.collected)}</div><p class="muted" style="font-size:12px">Angka dari transaksi simulasi yang sudah diverifikasi.</p><div class="divider"></div><div class="details-list"><div class="detail-line"><span class="muted">Anggota tercatat</span><strong>${db.users.filter(x=>x.active).length}</strong></div><div class="detail-line"><span class="muted">Perlu pengingat</span><strong>${st.due}</strong></div></div><a href="#/pengurus/laporan" class="link-arrow" style="margin-top:22px">Buka laporan ${icon('arrow-right')}</a></div><div class="editorial-note"><div class="eyebrow">PENGINGAT</div><p>Satu transaksi dicek baik-baik, satu kali tercatat.</p></div></aside></div>`}
-function verifyQueue(){const arr=db.intents.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));return `${demoStrip()}${head('Verifikasi pembayaran','Cocokkan pengajuan dengan penerimaan sebelum menyetujui.')}<div class="paper"><div class="float-top"><span class="eyebrow">DAFTAR PENGAJUAN</span><span class="pill warn">${arr.filter(x=>x.status==='pending').length} menunggu</span></div><div class="divider"></div>${arr.length?arr.map(t=>{const u=db.users.find(x=>x.id===t.userId);return `<div class="list-row"><div class="row-main">${avatar(u)}<div><div class="row-title">${esc(u.name)}</div><div class="row-meta">${esc(t.id)} · ${shortDate(t.createdAt)}</div></div></div><div class="row-right"><div class="row-amount">${rp(t.amount)}</div><div style="margin:5px 0">${badgeStatus(t.status)}</div><a class="link-arrow" href="#/pengurus/verifikasi/${encodeURIComponent(t.id)}">Tinjau ${icon('chevron-right')}</a></div></div>`}).join(''):`<div class="empty">${icon('check-circle')}<strong>Tidak ada pengajuan</strong><p>Pengajuan anggota akan muncul di sini.</p></div>`}</div>`}
+function staffDashboard(){
+ const st=staffStats();
+ const reviews=db.intents.filter(x=>x.status==='pending');
+ const isKahima=isChair();
+ const approvals=db.proposals.filter(x=>x.status==='submitted');
+ const lead=isKahima?approvals.length:st.review;
+ const href=isKahima?'/pengurus/persetujuan':'/pengurus/verifikasi';
+ const title=isKahima?'Keputusan menunggu persetujuan':'Pembayaran perlu diperiksa';
+ return `${demoStrip()}${head(isKahima?'Ruang Kahima':'Ruang bendahara',isKahima?'Pantau kondisi kas dan keputusan yang perlu persetujuan.':'Tindak lanjuti pembayaran dan tunggakan dengan jelas.')}
+  <section class="ops-hero" aria-label="Prioritas hari ini"><div class="ops-hero-main"><span class="eyebrow">PRIORITAS · OKTOBER 2026</span><h2><span>${lead}</span> ${title.toLowerCase()}.</h2><p>${isKahima?'Tinjau usulan berdasarkan bukti dan keputusan yang tercatat.':'Mulai dari pembayaran menunggu pemeriksaan, lalu lanjutkan pengingat tunggakan.'}</p></div><a href="#${href}" class="btn btn-primary">${isKahima?'Tinjau persetujuan':'Periksa pembayaran'} ${icon('arrow-right')}</a></section>
+  <div class="ops-summary" aria-label="Ringkasan keuangan"><a href="#/pengurus/verifikasi"><span>MENUNGGU VERIFIKASI</span><strong>${st.review}</strong><small>Transaksi perlu diperiksa</small></a><a href="#/pengurus/tunggakan"><span>BELUM BAYAR OKTOBER</span><strong>${st.due}</strong><small>Anggota</small></a><a href="#/pengurus/buku-kas"><span>PENERIMAAN OKTOBER</span><strong>${rp(st.collected)}</strong><small>Data demo terverifikasi</small></a></div>
+  <div class="ops-work-grid"><section><div class="label-row"><h2>Antrean terbaru</h2><a class="link-arrow" href="#/pengurus/verifikasi">Semua transaksi ${icon('arrow-right')}</a></div><div class="ops-list">${reviews.length?reviews.slice(0,5).map(t=>{const u=db.users.find(x=>x.id===t.userId);return `<a class="ops-list-item" href="#/pengurus/verifikasi/${t.id}">${avatar(u)}<span><strong>${esc(u?.name||'Anggota')}</strong><small>${shortDate(t.createdAt)} · ${esc(t.id)}</small></span><span class="ops-item-meta"><b>${rp(t.amount)}</b><small>Periksa ${icon('chevron-right')}</small></span></a>`}).join(''):`<div class="ops-no-data">${icon('check-circle')}<strong>Semua sudah diperiksa.</strong><p>Tidak ada pembayaran yang menunggu saat ini.</p></div>`}</div></section>
+  <aside class="ops-next"><div class="eyebrow">LANJUTKAN PEKERJAAN</div><a href="#/pengurus/anggota">Direktori anggota ${icon('arrow-right')}</a><a href="#/pengurus/reminder">Kirim pengingat ${icon('arrow-right')}</a><a href="#/pengurus/laporan">Laporan keuangan ${icon('arrow-right')}</a>${isKahima?`<a href="#/pengurus/persetujuan">Pusat persetujuan ${icon('arrow-right')}</a>`:''}<p>Seluruh angka merupakan simulasi pada perangkat ini, bukan data rekening.</p></aside></div>`;
+}
+function verifyQueue(){
+ const arr=db.intents.slice().sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||new Date(b.createdAt)-new Date(a.createdAt));
+ const waiting=arr.filter(x=>x.status==='pending').length;
+ const mode=window._reviewFilter||'pending';
+ const visible=arr.filter(x=>mode==='all'||(mode==='pending'?x.status==='pending':x.status!=='pending'));
+ return `${demoStrip()}${head('Verifikasi pembayaran','Periksa pengajuan dari anggota. Setujui hanya jika bukti penerimaan benar-benar cocok.')}
+  <section class="ops-table-section"><div class="ops-toolbar"><div><span class="eyebrow">ANTREAN TRANSAKSI</span><h2>${waiting} perlu tindakan</h2></div><div class="ops-tabs" role="group" aria-label="Filter status pembayaran"><button data-action="review-filter" data-id="pending" aria-pressed="${mode==='pending'}" class="${mode==='pending'?'is-active':''}">Menunggu</button><button data-action="review-filter" data-id="done" aria-pressed="${mode==='done'}" class="${mode==='done'?'is-active':''}">Diproses</button><button data-action="review-filter" data-id="all" aria-pressed="${mode==='all'}" class="${mode==='all'?'is-active':''}">Semua</button></div></div>
+  <div class="ops-list">${visible.length?visible.map(t=>{const u=db.users.find(x=>x.id===t.userId);return `<a class="ops-list-item" href="#/pengurus/verifikasi/${t.id}">${avatar(u)}<span><strong>${esc(u?.name||'Anggota')}</strong><small>${esc(t.id)} · ${shortDate(t.createdAt)}</small></span><span class="ops-item-meta"><b>${rp(t.amount)}</b><small>${t.status==='pending'?'Tinjau':'Lihat detail'} ${icon('chevron-right')}</small></span></a>`}).join(''):`<div class="ops-no-data">${icon('check-circle')}<strong>${mode==='pending'?'Tidak ada transaksi menunggu':'Belum ada transaksi pada filter ini'}</strong><p>Pilih filter lain untuk melihat daftar pembayaran.</p></div>`}</div></section>
+  <div class="soft-note" style="margin-top:16px">${icon('info')}<span>Persetujuan dalam demo hanya mengubah data browser. KasHima belum terhubung ke transaksi merchant asli.</span></div>`;
+}
 function verifyDetail(id){const t=getIntent(id),u=t&&db.users.find(x=>x.id===t.userId);if(!t||!u)return errorPage('Pengajuan tidak ditemukan','Data transaksi tersebut tidak tersedia.','/pengurus/verifikasi');return `${demoStrip()}<a class="link-arrow" href="#/pengurus/verifikasi">${icon('arrow-left')} Kembali ke antrean</a><div style="height:20px"></div>${head('Periksa pembayaran','Pemeriksaan ini hanya simulasi, belum terkoneksi ke merchant.')}<div class="grid-main"><div class="stack"><div class="paper"><div class="float-top"><span class="eyebrow">PENGAJUAN ${esc(t.id)}</span>${badgeStatus(t.status)}</div><div style="font-size:37px;letter-spacing:-1.3px;margin:23px 0 3px">${rp(t.amount)}</div><p class="muted" style="font-size:12px">${shortDate(t.createdAt)} · Referensi ${esc(t.reference||'Belum ada')}</p><div class="divider"></div><div class="details-list"><div class="detail-line"><span class="muted">Nama anggota</span><strong>${esc(u.name)}</strong></div><div class="detail-line"><span class="muted">NIM</span><strong>${esc(u.nim)}</strong></div><div class="detail-line"><span class="muted">Periode yang dipilih</span><strong>${t.obligationIds.map(id=>monthLabel(db.obligations.find(x=>x.id===id)?.month||'2026-10')).join(', ')}</strong></div><div class="detail-line"><span class="muted">Keterangan</span><strong>Data simulasi</strong></div></div></div><div class="soft-note warning">${icon('alert')}<span>Di website produksi, persetujuan harus dibatasi berdasarkan bukti transaksi resmi merchant. Tombol di sini khusus latihan interaksi antarpengguna.</span></div></div><aside class="paper"><span class="eyebrow">PILIH KEPUTUSAN</span><h2 style="margin:13px 0 7px">${t.status==='pending'?'Periksa sebelum lanjut.':'Keputusan sudah dicatat.'}</h2><p class="muted" style="font-size:12px">${t.status==='pending'?'Dalam demo, setujui untuk melihat bagaimana riwayat dan dashboard anggota ikut berubah.':'Pengajuan ini sudah diproses pada penyimpanan contoh lokal.'}</p>${t.status==='pending'?`<button class="btn btn-primary btn-block" style="margin-top:18px" data-action="approve-payment" data-id="${esc(t.id)}">${icon('check')} Setujui simulasi</button><button class="btn btn-outline btn-block" style="margin-top:9px" data-action="reject-payment" data-id="${esc(t.id)}">Tolak pengajuan</button>`:`<a class="btn btn-outline btn-block" style="margin-top:22px" href="#/pengurus/verifikasi">Kembali ke daftar</a>`}</aside></div>`}
 function membersPage(){const list=db.users;return `${demoStrip()}${head('Direktori anggota','Kelola informasi anggota secara tertib.',isChair()?`<button class="btn btn-primary" data-action="new-member">${icon('plus')} Tambah anggota</button>`:'')}<div class="paper"><div class="float-top"><span class="eyebrow">${list.length} AKUN DATA CONTOH</span><button class="btn btn-outline btn-small" data-action="export-members">${icon('download')} Ekspor CSV</button></div><div style="height:17px"></div><div class="searchbar"><span class="icon">${icon('search')}</span><input class="input" id="member-search" placeholder="Cari nama atau NIM" aria-label="Cari anggota" data-action-input="member-search"/></div><div id="member-results" style="margin-top:17px">${memberRows(list)}</div></div>`}
 function memberRows(list){return list.length?list.map(u=>`<a class="list-row" href="#/pengurus/anggota/${u.id}"><div class="row-main">${avatar(u)}<div><div class="row-title">${esc(u.name)}</div><div class="row-meta">${esc(u.nim)} · ${esc(u.year)}</div></div></div><div class="row-right"><div class="row-amount">${rp(totalDue(u.id))}</div>${u.active?`<span class="pill success">Aktif</span>`:'<span class="pill neutral">Nonaktif</span>'}</div></a>`).join(''):`<div class="empty">${icon('search')}<strong>Tidak ada hasil</strong><p>Coba nama atau NIM lain.</p></div>`}
@@ -302,6 +350,7 @@ document.addEventListener('click',e=>{if(e.target.id==='overlay'){closeModal();r
  case 'close-modal':closeModal();break;
  case 'toggle-theme':setTheme(db.theme==='light'?'dark':'light');break;
  case 'glass-preset':setGlassPreset(id);break;
+ case 'review-filter':if(['pending','done','all'].includes(id)){window._reviewFilter=id;render(false)}break;
  case 'toggle-pref':if(a.dataset.key==='anonymous')user().anonymous=!user().anonymous;else db.prefs[a.dataset.key]=!db.prefs[a.dataset.key];save();render(false);toast('Preferensi demo diperbarui.');break;
  case 'init-pay':initPay();break;
  case 'demo-submit':submitPayment(id);break;
@@ -342,8 +391,8 @@ document.addEventListener('submit',e=>{const f=e.target;if(!(f instanceof HTMLFo
  case 'expense-form':{e.preventDefault();if(!hasStaff())return;const d=new FormData(f),amount=Number(d.get('amount'));if(!Number.isFinite(amount)||amount<1000){toast('Masukkan nominal minimal Rp1.000.');return}const q={id:uid('PROP').toUpperCase(),kind:'expense',title:String(d.get('title')).slice(0,100),amount,date:new Date().toISOString(),status:'submitted',by:user().id};db.proposals.unshift(q);audit(`Usulan pengeluaran ${q.id} dibuat`);save();closeModal();render(false);toast('Usulan dikirim ke pusat persetujuan.');break}
  case 'policy-form':{e.preventDefault();if(!hasStaff())return;const d=new FormData(f),q={id:uid('POL').toUpperCase(),kind:'policy',title:String(d.get('title')).slice(0,100),description:String(d.get('description')).slice(0,600),date:new Date().toISOString(),status:'submitted',by:user().id};db.proposals.unshift(q);audit(`Usulan kebijakan ${q.id} dibuat`);save();closeModal();render(false);toast('Usulan contoh berhasil dicatat.');break}
  }});
-document.addEventListener('input',e=>{if(e.target.id==='glass-blur-slider'){setGlassBlur(e.target.value);return}if(e.target.id==='member-search'){const q=e.target.value.trim().toLowerCase();const root=document.getElementById('member-results');if(root)root.innerHTML=memberRows(db.users.filter(u=>u.name.toLowerCase().includes(q)||u.nim.includes(q)))}});
-document.addEventListener('change',async e=>{if(e.target.id!=='avatar-picker')return;const file=e.target.files?.[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Gunakan gambar JPG, PNG atau WebP.');return}if(file.size>3*1024*1024){toast('Ukuran maksimal gambar demo 3 MB.');return}try{const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=reject;x.src=data});const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');const s=Math.min(img.width,img.height),x=(img.width-s)/2,y=(img.height-s)/2;ctx.drawImage(img,x,y,s,s,0,0,256,256);user().avatar=c.toDataURL('image/jpeg',.79);save();render(false);toast('Foto profil demo diperbarui.')}catch{toast('Gagal memproses gambar.')}
+document.addEventListener('input',e=>{if(e.target.id==='glass-blur-slider'){setGlassBlur(e.target.value,true);return}if(e.target.id==='member-search'){const q=e.target.value.trim().toLowerCase();const root=document.getElementById('member-results');if(root)root.innerHTML=memberRows(db.users.filter(u=>u.name.toLowerCase().includes(q)||u.nim.includes(q)))}});
+document.addEventListener('change',async e=>{if(e.target.id==='glass-blur-slider'){setGlassBlur(e.target.value,true);return}if(e.target.id!=='avatar-picker')return;const file=e.target.files?.[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Gunakan gambar JPG, PNG atau WebP.');return}if(file.size>3*1024*1024){toast('Ukuran maksimal gambar demo 3 MB.');return}try{const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=reject;x.src=data});const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');const s=Math.min(img.width,img.height),x=(img.width-s)/2,y=(img.height-s)/2;ctx.drawImage(img,x,y,s,s,0,0,256,256);user().avatar=c.toDataURL('image/jpeg',.79);save();render(false);toast('Foto profil demo diperbarui.')}catch{toast('Gagal memproses gambar.')}
 });
 document.addEventListener('keydown',e=>{const dialog=document.querySelector('#modal-root .modal');if(e.key==='Escape'&&dialog){e.preventDefault();closeModal();return}if(e.key==='Tab'&&dialog){const focusables=[...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]')].filter(el=>el.getClientRects().length>0);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===dialog)){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 window.addEventListener('hashchange',()=>{closeModal();render()});
