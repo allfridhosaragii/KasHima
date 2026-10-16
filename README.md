@@ -1,31 +1,32 @@
-# KasHima — Luxury Mobile-first Demo
+# KasHima — Quiet Luxury Financial Workspace
 
-Website demo KasHima dengan tampilan editorial luxury, tema terang/gelap, navigasi khusus anggota, bendahara dan Kahima, serta pengelolaan profil (nama lengkap, panggilan dan foto).
+KasHima is a mobile-first **React + TypeScript** prototype for managing monthly student-association contributions. The project is built with Vite and split into independently maintained app modules rather than a single HTML/JS/CSS demo.
 
-## Buka website
-
-https://allfridhosaragii.github.io/KasHima/
-
-Dibangun dengan HTML, CSS dan JavaScript tanpa dependensi runtime. Dashboard dan pembayaran yang ada **simulasi tersimpan di browser lokal**; ini bukan aplikasi keuangan produksi, tidak memiliki autentikasi server, bukan QRIS asli dan tidak memproses uang sungguhan. Jangan masukkan NIM, password atau bukti pembayaran asli.
-
-## Cara menjalankan
-
-Buka `index.html` di browser atau jalankan server statis lokal:
+## Development
 
 ```sh
-python -m http.server 8000
+npm install
+npm run dev
+npm run build
+npm test
 ```
 
-Lalu buka http://localhost:8000.
+`vite.config.ts` configures the GitHub Pages public base `/KasHima/`; the app uses `HashRouter`. The `dist/` output is deployed by GitHub Actions on pushes to `main`.
 
-## Deployment
+## Screens and UX
 
-Workflow GitHub Actions `.github/workflows/deploy-pages.yml` menerbitkan isi root repository ke GitHub Pages. Pastikan Pages diaktifkan melalui Settings > Pages > Build and deployment > Source: GitHub Actions bila workflow pertama tidak dapat mengaktifkan secara otomatis.
+32 application route patterns are implemented across members, treasurers and Kahima, including account setup/recovery explanation, protected receipts, status-aware profile, Glass Studio, role administration and audit. The nav adapts by role; status and role changes are recorded as audit entries in the demo. Main design direction is quiet luxury: restrained ivory/forest palette, editorial typographic hierarchy, minimal decoration, CSS micro-interactions, mobile-first navigation, accessibility and Anti-Slop principles.
 
-## Batas keamanan dan QRIS
+### Account statuses & roles
 
-Semua role dan login pada demo hanya simulasi. Data dan profil disimpan di localStorage browser masing-masing, tanpa sinkronisasi antar pengguna. Halaman berhasil hanya hasil persetujuan simulasi bendahara, bukan verifikasi merchant. Implementasi produksi memerlukan backend aman, otentikasi NIM, database, kontrol hak akses, dan sumber transaksi QRIS yang sah.
+Role: `member`, `treasurer`, `chair`. Membership status: `active`, `leave`, `inactive`, `alumni`. A Kahima can adjust other accounts' roles in **Hak akses** and membership status in **Keanggotaan**. No user can change their own role. All role transitions are recorded in the demo audit log.
 
-## Pedoman desain
+### Payment safety
 
-Mobile-first, premium editorial, light default, dark toggle, gerak halus dengan `prefers-reduced-motion`, mengikuti prinsip https://github.com/miqdadbadjuber/anti-slop tanpa menyalin template.
+This website is still an **interactive frontend demonstration**. User data, payments, profiles and preferences are stored in localStorage in each browser, not centrally. Login is a role simulator, not server authentication. No real QRIS, merchant APIs or payment confirmations are connected. An authorized treasury demo account must approve a demonstration payment before the receipt route can display a success state. Do not enter real student credentials or send real money through this site.
+
+## Next production milestone
+
+To make KasHima a real secure financial application, add Hono/Cloudflare Workers (or audited alternative), D1 persistent database, audited role-based access and authentication, secure file storage, and a verified authorized merchant transaction source. An image of a QR does not contain the settlement status.
+
+Read [architecture](docs/ARCHITECTURE.md) for routes, component structure and migration scope.
