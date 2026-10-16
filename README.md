@@ -1,36 +1,31 @@
-# KasHima — Luxury Editorial Demo
+# KasHima — Luxury Mobile-first Demo
 
-Prototipe antarmuka KasHima yang berfokus pada **mobile-first**, luxury editorial, dan pedoman [Anti-Slop](https://github.com/miqdadbadjuber/anti-slop).
+Website demo KasHima dengan tampilan editorial luxury, tema terang/gelap, navigasi khusus anggota, bendahara dan Kahima, serta pengelolaan profil (nama lengkap, panggilan dan foto).
 
-**Demo:** https://allfridhosaragii.github.io/KasHima/ (aktif setelah GitHub Pages dikonfigurasi).
+## Buka website
 
-## Menjalankan
+https://allfridhosaragii.github.io/KasHima/
 
-Unduh/clone repo, lalu jalankan server statis pada folder root:
+Dibangun dengan HTML, CSS dan JavaScript tanpa dependensi runtime. Dashboard dan pembayaran yang ada **simulasi tersimpan di browser lokal**; ini bukan aplikasi keuangan produksi, tidak memiliki autentikasi server, bukan QRIS asli dan tidak memproses uang sungguhan. Jangan masukkan NIM, password atau bukti pembayaran asli.
 
-```bash
-python -m http.server 5173
+## Cara menjalankan
+
+Buka `index.html` di browser atau jalankan server statis lokal:
+
+```sh
+python -m http.server 8000
 ```
 
-Buka http://localhost:5173/ di browser. Tanpa dependensi npm.
+Lalu buka http://localhost:8000.
 
-## Struktur
+## Deployment
 
-- `index.html` — kerangka halaman dan fallback ketika JavaScript tidak berjalan
-- `styles.css` — desain premium, responsive layout, motion, tema terang/gelap
-- `app.js` — router dan interaksi demo untuk peran anggota/bendahara/Kahima
-- `assets/favicon.svg` — ikon KasHima
-- `.github/workflows/pages.yml` — workflow publikasi GitHub Pages
-- `DESIGN.md`, `AGENTS.md` — prinsip desain dan panduan agent
+Workflow GitHub Actions `.github/workflows/deploy-pages.yml` menerbitkan isi root repository ke GitHub Pages. Pastikan Pages diaktifkan melalui Settings > Pages > Build and deployment > Source: GitHub Actions bila workflow pertama tidak dapat mengaktifkan secara otomatis.
 
-## Peringatan penting
+## Batas keamanan dan QRIS
 
-Website publik ini **hanya prototipe**; nama, iuran, akun, dan pembayaran memakai data **simulasi di browser lokal**. Login bukan autentikasi server dan QR bukan QRIS merchant. **Jangan masukkan NIM asli, password sungguhan, foto sensitif, atau uang nyata.** Penyimpanan lokal hanya berlaku per browser/perangkat.
+Semua role dan login pada demo hanya simulasi. Data dan profil disimpan di localStorage browser masing-masing, tanpa sinkronisasi antar pengguna. Halaman berhasil hanya hasil persetujuan simulasi bendahara, bukan verifikasi merchant. Implementasi produksi memerlukan backend aman, otentikasi NIM, database, kontrol hak akses, dan sumber transaksi QRIS yang sah.
 
-Pembayaran berhasil baru tampil setelah verifikasi simulasi bendahara. Integrasi produksi memerlukan database server aman dan sumber transaksi QRIS sah yang bisa memvalidasi pembayaran.
+## Pedoman desain
 
-## GitHub Pages
-
-Buka [Settings → Pages](https://github.com/allfridhosaragii/KasHima/settings/pages), pilih **GitHub Actions** sebagai sumber, lalu workflow `Deploy KasHima` akan menerbitkan website. Lihat tab [Actions](https://github.com/allfridhosaragii/KasHima/actions).
-
-Lisensi aset bawaan tetap mengikuti lisensi asalnya; tidak ada aset Awwwards yang disalin.
+Mobile-first, premium editorial, light default, dark toggle, gerak halus dengan `prefers-reduced-motion`, mengikuti prinsip https://github.com/miqdadbadjuber/anti-slop tanpa menyalin template.
