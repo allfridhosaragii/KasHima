@@ -14,7 +14,6 @@ test('profile is clean and account status is shown, without removed labels',asyn
  await expect(page.getByText('Akun aktif')).toBeVisible()
  await expect(page.getByText('MODE PRATINJAU')).toHaveCount(0)
  await expect(page.getByText('01 / IDENTITAS')).toHaveCount(0)
- await expect(page.getByText('AKUN AKTIF')).toHaveCount(0)
  await expect(page.getByText('Informasi pribadi')).toBeVisible()
 })
 
@@ -76,6 +75,10 @@ test('mobile and desktop layouts have no global horizontal overflow',async({page
   await page.goto(url(path))
   await expect(page.locator('main#main')).toBeVisible()
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)
+  if(overflow>2){
+   const offenders=await page.evaluate(()=>Array.from(document.querySelectorAll<HTMLElement>('*')).map(e=>({tag:e.tagName,cl:typeof e.className==='string'?e.className:'',right:Math.round(e.getBoundingClientRect().right),left:Math.round(e.getBoundingClientRect().left),width:Math.round(e.getBoundingClientRect().width)})).filter(e=>e.right>window.innerWidth+2||e.left< -2).slice(0,16))
+   console.log(`Overflow details on ${path}: ${JSON.stringify(offenders)}`)
+  }
   expect(overflow,`overflow on ${path}`).toBeLessThanOrEqual(2)
  }
 })

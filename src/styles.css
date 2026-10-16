@@ -26,3 +26,14 @@
 @media(prefers-reduced-transparency:reduce){.sidebar,.topbar,.bottom-nav,.modal-shade,.glass-preview-layer{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--paper)!important}}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.sidebar,.topbar,.bottom-nav,.glass-preview-layer{background:var(--paper)!important}}
 @media(max-width:850px){.shell-staff .bottom-nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* iPhone SE / 320px: header controls must fit without horizontal scrolling. */
+@media(max-width:375px){
+ .topbar{gap:7px;padding-inline:8px}
+ .topbar-mobile .brand{gap:7px}
+ .topbar-mobile .brand-type strong{font-size:15px}
+ .topbar-mobile .brand-type small{display:none}
+ .topbar-actions{gap:0}
+ .topbar-actions .icon-button{min-width:40px;width:40px}
+ .top-profile{min-width:40px}
+}
