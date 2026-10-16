@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const url = (part = '/app') => `/#${part}`
+const url = (part = '/app') => `/KasHima/#${part}`
 
 test.beforeEach(async ({ page }) => {
  await page.goto(url())
@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 test('profile is clean and account status is shown, without removed labels',async({page})=>{
  await page.goto(url('/app/profil'))
  await expect(page.getByRole('heading',{name:'Profil'})).toBeVisible()
- await expect(page.getByText('Raka Pratama')).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Raka Pratama'})).toBeVisible()
  await expect(page.getByText('Akun aktif')).toBeVisible()
  await expect(page.getByText('MODE PRATINJAU')).toHaveCount(0)
  await expect(page.getByText('01 / IDENTITAS')).toHaveCount(0)
