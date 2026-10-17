@@ -1,3 +1,5 @@
+> Aurora Glass v7. Desain baru untuk 32 route berdasarkan referensi workflow glass plum, cobalt, dan orchid. Baca [arsitektur Aurora](docs/ARCHITECTURE-AURORA-v7.md). Seluruh transaksi masih demo dan bukan kas produksi.
+
 # KasHima — Quiet Luxury Financial Workspace
 
 KasHima is a mobile-first **React + TypeScript** prototype for managing monthly student-association contributions. The project is built with Vite and split into independently maintained app modules rather than a single HTML/JS/CSS demo.
