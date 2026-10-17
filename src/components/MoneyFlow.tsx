@@ -1,11 +1,11 @@
-import { ArrowDownToLine, CircleCheck2, FileClock, Receipt, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, CircleCheck, FileClock, Receipt, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 type FlowMode = 'member' | 'finance' | 'chair'
 type Step = { title:string;detail:string;icon:LucideIcon }
 const steps:Record<FlowMode,Step[]> = {
- member:[{title:'Tagihan',detail:'Kewajiban bulanan',icon:Receipt},{title:'Pembayaran',detail:'Metode tersedia',icon:ArrowDownToLine},{title:'Pemeriksaan',detail:'Validasi penerimaan',icon:ShieldCheck},{title:'Tercatat',detail:'Riwayat kas',icon:CircleCheck2}],
+ member:[{title:'Tagihan',detail:'Kewajiban bulanan',icon:Receipt},{title:'Pembayaran',detail:'Metode tersedia',icon:ArrowDownToLine},{title:'Pemeriksaan',detail:'Validasi penerimaan',icon:ShieldCheck},{title:'Tercatat',detail:'Riwayat kas',icon:CircleCheck}],
  finance:[{title:'Masuk',detail:'Transaksi diajukan',icon:ArrowDownToLine},{title:'Periksa',detail:'Cocokkan bukti',icon:ShieldCheck},{title:'Putuskan',detail:'Setujui atau tolak',icon:FileClock},{title:'Arsipkan',detail:'Masuk buku kas',icon:Receipt}],
- chair:[{title:'Pengajuan',detail:'Usulan diterima',icon:Receipt},{title:'Peninjauan',detail:'Periksa dampak',icon:ShieldCheck},{title:'Persetujuan',detail:'Keputusan pengurus',icon:CircleCheck2},{title:'Audit',detail:'Jejak keputusan',icon:FileClock}]
+ chair:[{title:'Pengajuan',detail:'Usulan diterima',icon:Receipt},{title:'Peninjauan',detail:'Periksa dampak',icon:ShieldCheck},{title:'Persetujuan',detail:'Keputusan pengurus',icon:CircleCheck},{title:'Audit',detail:'Jejak keputusan',icon:FileClock}]
 }
 export function MoneyFlow({mode='member',hasAction=false}:{mode?:FlowMode,hasAction?:boolean}){
  const name=mode==='member'?'Perjalanan pembayaran':mode==='finance'?'Alur verifikasi kas':'Alur persetujuan';
