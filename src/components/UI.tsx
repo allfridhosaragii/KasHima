@@ -5,7 +5,7 @@ import { IDR, initials, roleTitle, statusTitle } from '../lib/data'
 import type { User } from '../lib/types'
 export function Avatar({person,size='md'}:{person:Pick<User,'name'|'avatar'>,size?:'sm'|'md'|'lg'}){return <span className={`avatar avatar-${size}`} aria-label={person.name}>{person.avatar?<img src={person.avatar} alt=""/>:initials(person.name)}</span>}
 export function Overline({children}:{children:ReactNode}){return <span className="overline">{children}</span>}
-export function PageHead({title,description,action,kicker}:{title:string,description?:string,action?:ReactNode,kicker?:string}){return <header className="page-head"><div>{kicker&&<Overline>{kicker}</Overline>}<h1>{title}<span className="title-stop">.</span></h1>{description&&<p>{description}</p>}</div>{action&&<div className="page-action">{action}</div>}</header>}
+export function PageHead({title,description,action,kicker}:{title:string,description?:string,action?:ReactNode,kicker?:string}){return <header className="page-head"><div>{kicker&&<Overline>{kicker}</Overline>}<h1>{title}</h1>{description&&<p>{description}</p>}</div>{action&&<div className="page-action">{action}</div>}</header>}
 export function SectionHead({title,link,label}:{title:string,link?:string,label?:string}){return <div className="section-head"><h2>{title}</h2>{link&&<Link to={link} className="subtle-link">{label??'Lihat semua'} <ArrowRight size={16}/></Link>}</div>}
 export function Card({children,className=''}:{children:ReactNode,className?:string}){return <section className={`card ${className}`}>{children}</section>}
 export function Pill({children,kind='neutral'}:{children:ReactNode,kind?:'neutral'|'success'|'warning'|'danger'|'forest'}){return <span className={`pill pill-${kind}`}>{children}</span>}
