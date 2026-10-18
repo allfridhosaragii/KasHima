@@ -28,7 +28,7 @@ async function fit(page:Page,route:string){
 }
 test('Anggota: all key routes are navigable and fit the current screen',async({page})=>{
  for(const r of member)await fit(page,r)
- await expect(page.locator('.bottom-nav .bottom-item')).toHaveCount(4)
+ await expect(page.locator('.bottom-nav .bottom-item')).toHaveCount(5)
 })
 test('Bendahara: workflow and full operational menu remain accessible',async({page})=>{
  await loginAs(page,/Hana Putri/)
@@ -64,7 +64,7 @@ test('Glass Studio slider and accessible modal remain functional',async({page})=
  await expect.poll(()=>page.evaluate(()=>document.documentElement.style.getPropertyValue('--glass-blur'))).toBe('28px')
  await page.goto(at('/app/profil'))
  await page.getByRole('button',{name:'Edit profil'}).click()
- const modal=page.getByRole('dialog',{name:'Edit identitas'})
+ const modal=page.getByRole('dialog',{name:'Edit profil'})
  await expect(modal).toBeVisible()
  await page.keyboard.press('Escape')
  await expect(modal).toHaveCount(0)
