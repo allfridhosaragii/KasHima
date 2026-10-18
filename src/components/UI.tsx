@@ -1,11 +1,11 @@
-import type { ReactNode, FormEvent } from 'react'
+import { useEffect, useId, useRef, type ReactNode, type FormEvent } from 'react'
 import { ArrowRight, Check, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Clock3, FileText, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { IDR, initials, roleTitle, statusTitle } from '../lib/data'
 import type { User } from '../lib/types'
 export function Avatar({person,size='md'}:{person:Pick<User,'name'|'avatar'>,size?:'sm'|'md'|'lg'}){return <span className={`avatar avatar-${size}`} aria-label={person.name}>{person.avatar?<img src={person.avatar} alt=""/>:initials(person.name)}</span>}
 export function Overline({children}:{children:ReactNode}){return <span className="overline">{children}</span>}
-export function PageHead({title,description,action,kicker}:{title:string,description?:string,action?:ReactNode,kicker?:string}){return <header className="page-head"><div>{kicker&&<Overline>{kicker}</Overline>}<h1>{title}</h1>{description&&<p>{description}</p>}</div>{action&&<div className="page-action">{action}</div>}</header>}
+export function PageHead({title,description,action,kicker}:{title:string,description?:string,action?:ReactNode,kicker?:string}){return <header className="page-head"><div>{kicker&&<span className="page-context">{kicker}</span>}<h1>{title}</h1>{description&&<p>{description}</p>}</div>{action&&<div className="page-action">{action}</div>}</header>}
 export function SectionHead({title,link,label}:{title:string,link?:string,label?:string}){return <div className="section-head"><h2>{title}</h2>{link&&<Link to={link} className="subtle-link">{label??'Lihat semua'} <ArrowRight size={16}/></Link>}</div>}
 export function Card({children,className=''}:{children:ReactNode,className?:string}){return <section className={`card ${className}`}>{children}</section>}
 export function Pill({children,kind='neutral'}:{children:ReactNode,kind?:'neutral'|'success'|'warning'|'danger'|'forest'}){return <span className={`pill pill-${kind}`}>{children}</span>}
@@ -21,7 +21,24 @@ export function ErrorNote({children}:{children:ReactNode}){return <div className
 export function HelpNote({children}:{children:ReactNode}){return <div className="note"><CircleHelp size={17}/>{children}</div>}
 export function MetaLine({label,value}:{label:string,value:ReactNode}){return <div className="meta-line"><span>{label}</span><strong>{value}</strong></div>}
 export function Button({children,kind='primary',onClick,disabled=false,type='button',className=''}:{children:ReactNode,kind?:'primary'|'secondary'|'text'|'danger',onClick?:()=>void,disabled?:boolean,type?:'button'|'submit',className?:string}){return <button type={type} onClick={onClick} disabled={disabled} className={`button button-${kind} ${className}`}>{children}</button>}
-export function Modal({title,children,onClose}:{title:string,children:ReactNode,onClose:()=>void}){return <div className="modal-shade" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section className="modal-panel" role="dialog" aria-modal="true" aria-label={title}><div className="modal-head"><h2>{title}</h2><button className="icon-only" type="button" aria-label="Tutup" onClick={onClose}><X size={20}/></button></div>{children}</section></div>}
+export function Modal({title,children,onClose}:{title:string,children:ReactNode,onClose:()=>void}){
+ const id=useId(),panel=useRef<HTMLElement>(null),close=useRef(onClose);close.current=onClose;
+ useEffect(()=>{
+   const previous=document.activeElement instanceof HTMLElement?document.activeElement:null;
+   const old=document.body.style.overflow;document.body.style.overflow='hidden';
+   const selector='button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+   const items=()=>Array.from(panel.current?.querySelectorAll<HTMLElement>(selector)||[]).filter(x=>x.getClientRects().length>0);
+   (panel.current?.querySelector<HTMLElement>('[autofocus]')||items()[0]||panel.current)?.focus();
+   const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();close.current();return}
+     if(e.key!=='Tab')return;const list=items();if(!list.length){e.preventDefault();return}
+     const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+   };
+   document.addEventListener('keydown',key);
+   return()=>{document.body.style.overflow=old;document.removeEventListener('keydown',key);previous?.focus()}
+ },[]);
+ return <div className="modal-shade" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section ref={panel} className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}><div className="modal-head"><h2 id={id}>{title}</h2><button className="icon-only" type="button" aria-label="Tutup" onClick={onClose}><X size={20}/></button></div>{children}</section></div>
+}
 export function FormField({label,children,note}:{label:string,children:ReactNode,note?:string}){return <label className="form-field"><span>{label}</span>{children}{note&&<small>{note}</small>}</label>}
 export function QuickLink({to,icon,title,meta}:{to:string,icon:ReactNode,title:string,meta?:string}){return <Link to={to} className="quick-link"><span className="quick-icon">{icon}</span><span><strong>{title}</strong>{meta&&<small>{meta}</small>}</span><ChevronRight size={17}/></Link>}
 export function RoleBadge({user}:{user:User}){return <div className="role-badges"><Pill kind="forest">{roleTitle(user.role)}</Pill><Pill kind={user.status==='active'?'success':'neutral'}>{statusTitle(user.status)}</Pill></div>}

@@ -1,3 +1,5 @@
+> UI release: **KasHima Clarity v9**. Read [design and mobile acceptance](docs/CLARITY-REDESIGN-v9.md).
+
 > Aurora Glass v7. Desain baru untuk 32 route berdasarkan referensi workflow glass plum, cobalt, dan orchid. Baca [arsitektur Aurora](docs/ARCHITECTURE-AURORA-v7.md). Seluruh transaksi masih demo dan bukan kas produksi.
 
 # KasHima — Quiet Luxury Financial Workspace

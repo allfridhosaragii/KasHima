@@ -1,4 +1,4 @@
-import { ArrowDownToLine, CircleCheck, FileClock, Receipt, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, ChevronDown, CircleCheck, FileClock, Receipt, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 type FlowMode = 'member' | 'finance' | 'chair'
 type Step = { title:string;detail:string;icon:LucideIcon }
@@ -10,7 +10,10 @@ const steps:Record<FlowMode,Step[]> = {
 export function MoneyFlow({mode='member',hasAction=false}:{mode?:FlowMode,hasAction?:boolean}){
  const name=mode==='member'?'Perjalanan pembayaran':mode==='finance'?'Alur verifikasi kas':'Alur persetujuan';
  const href=mode==='member'?'/app/tagihan':mode==='finance'?'/pengurus/verifikasi':'/pengurus/persetujuan';
- return <section className="flowboard" aria-label={name}><div className="flowboard-title"><strong>{name}</strong><small>4 tahapan</small></div>
+ return <details className="flowboard flow-details" aria-label={name}>
+ <summary className="flow-summary"><span><strong>{name}</strong><small>Penjelasan singkat 4 tahap</small></span><span className="flow-summary-more">Lihat alur <ChevronDown size={17}/></span></summary>
+ <div className="flow-details-body">
  <div className="flowboard-track">{steps[mode].map(({icon:Icon,title,detail},i)=><div className={'flowboard-node '+(i===0?'is-ready':'')} key={title}><span className="flowboard-node-icon"><Icon size={21} strokeWidth={1.7}/></span><strong>{title}</strong><small>{detail}</small></div>)}</div>
- <div className="flowboard-footer">{hasAction?<Link to={href} className="subtle-link">Buka {mode==='member'?'tagihan':mode==='finance'?'antrean':'persetujuan'} <span aria-hidden="true">→</span></Link>:<span>Diagram proses, bukan bukti pembayaran.</span>}</div></section>
+ <div className="flowboard-footer">{hasAction?<Link to={href} className="subtle-link">Buka {mode==='member'?'tagihan':mode==='finance'?'antrean':'persetujuan'} <span aria-hidden="true">→</span></Link>:<span>Diagram proses, bukan bukti pembayaran.</span>}</div>
+ </div></details>
 }
