@@ -23,7 +23,7 @@ test('Daily breakdown, types, searching and list mode remain functional',async({
  await page.locator('input[type=month]').fill('2026-10')
  await page.locator('.ck-grid').getByRole('button',{name:/^5 Oktober 2026/}).click()
  await expect(page.getByRole('heading',{name:'5 Oktober 2026'})).toBeVisible()
- await expect(page.getByText('Pokok tunggakan')).toBeVisible()
+ await expect(page.getByText('Pokok tunggakan').first()).toBeVisible()
  await expect(page.locator('.ck-list')).toBeVisible()
  await page.getByRole('button',{name:'Daftar',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Aktivitas bulanan'})).toBeVisible()
