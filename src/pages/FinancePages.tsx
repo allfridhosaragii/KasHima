@@ -16,7 +16,7 @@ export function Finance(){
  const {current,state}=useDemo();const navigate=useNavigate();if(!current)return null;
  const review=pending(state),waiting=review.length,debts=unresolved(state),proposals=state.proposals.filter(p=>p.status==='submitted').length;
  return <div className="content-page finance-home">
-  <header className="staff-heading compact-heading"><h1>Ringkasan keuangan</h1><p>Prioritas pekerjaan dan kas yang perlu diperiksa.</p></header>
+  <header className="staff-heading compact-heading"><h1>Ringkasan keuangan</h1><p>Tinjau transaksi terbaru dan ringkasan penerimaan.</p></header>
   <div className="finance-overview" aria-label="Ringkasan pekerjaan bendahara">
    <section className="finance-focus"><div><span className="focus-label">Perlu diperiksa</span><strong className="focus-number">{waiting} <span>transaksi</span></strong><p>Konfirmasi pembayaran demo satu per satu.</p></div><Button onClick={()=>navigate('/pengurus/verifikasi')}>Buka antrean <ArrowRight size={17}/></Button></section>
    <div className="finance-mini-stats"><Link to="/pengurus/tunggakan"><span>Anggota menunggak</span><strong>{debts.length}</strong><ArrowRight size={16}/></Link><Link to="/pengurus/laporan"><span>Penerimaan demo</span><strong>{IDR(moneyIn(state))}</strong><ArrowRight size={16}/></Link>{current.role==='chair'&&<Link to="/pengurus/persetujuan"><span>Menunggu persetujuan</span><strong>{proposals}</strong><ArrowRight size={16}/></Link>}</div>
