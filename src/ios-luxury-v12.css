@@ -334,3 +334,57 @@
 @media(prefers-reduced-transparency:reduce){
  .shell-staff :is(.sidebar,.topbar,.bottom-nav,.mobile-menu-links){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--paper)!important}
 }
+
+
+/* Progressive disclosure keeps helper content discoverable without competing with the core task. */
+.shell-staff .staff-more-tasks,
+.shell-staff .staff-disclosure{
+  margin:0;border:1px solid var(--line);background:var(--paper);
+  border-radius:13px;min-width:0;overflow:hidden;
+}
+.shell-staff .staff-more-tasks>summary,
+.shell-staff .staff-disclosure>summary{
+  display:flex;align-items:center;gap:9px;min-height:50px;
+  padding:12px 15px;cursor:pointer;list-style:none;
+  color:var(--ink);font-size:13px;font-weight:680;
+  transition:background-color .15s ease;
+}
+.shell-staff .staff-more-tasks>summary::-webkit-details-marker,
+.shell-staff .staff-disclosure>summary::-webkit-details-marker{display:none}
+.shell-staff .staff-more-tasks>summary:hover,
+.shell-staff .staff-disclosure>summary:hover{background:var(--soft)}
+.shell-staff .staff-more-tasks>summary svg{flex:none;color:var(--muted);margin-left:auto}
+.shell-staff .staff-disclosure>summary svg{flex:none;color:var(--forest-text)}
+.shell-staff .staff-more-tasks[open]>summary,
+.shell-staff .staff-disclosure[open]>summary{border-bottom:1px solid var(--line)}
+.shell-staff .staff-more-tasks .work-links{
+  margin:0;border:0;border-radius:0;background:var(--paper);box-shadow:none;
+}
+.shell-staff .staff-disclosure>p,
+.shell-staff .staff-disclosure>ol{
+  margin:12px 15px 15px;padding:0;font-size:12px;line-height:1.6;color:var(--muted);
+}
+.shell-staff .staff-disclosure>ol{padding-left:19px}
+.shell-staff .staff-disclosure>ol li{padding:2px 0}
+.shell-staff .role-admin-intro.staff-disclosure{display:block;margin-bottom:14px;padding:0}
+.shell-staff .report-method{min-width:0;align-self:start}
+.shell-staff .staff-data-caption{
+  font-size:12px;line-height:1.4;color:var(--muted);
+  overflow-wrap:anywhere;
+}
+.shell-staff .role-admin-intro.staff-disclosure>summary{font-weight:690}
+.shell-staff .staff-disclosure + .card{margin-top:12px}
+@media(max-width:850px){
+ .shell-staff .staff-more-tasks>summary,
+ .shell-staff .staff-disclosure>summary{min-height:46px;padding:12px 13px}
+ .shell-staff .report-method{width:100%}
+ .shell-staff .staff-data-caption{width:100%;text-align:left}
+}
+/* iOS type and reduced-transparency safety overrides for third-party browsers. */
+@media(prefers-contrast:more){
+ .shell-staff .card,
+ .shell-staff .staff-disclosure,
+ .shell-staff .metric-link,
+ .shell-staff .finance-focus{border-color:var(--muted)}
+ .shell-staff .list-row,.shell-staff .side-link{font-weight:700}
+}
