@@ -40,7 +40,7 @@ test('treasurer can open all finance tools through compact mobile work menu',asy
  await menu.locator('summary').click()
  await expect(menu.getByRole('link',{name:'Buku kas'})).toBeVisible()
  await menu.getByRole('link',{name:'Buku kas'}).click()
- await expect(page.getByRole('heading',{name:'Buku kas'})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Kalender Kas'})).toBeVisible()
  await expect(menu).not.toHaveAttribute('open','')
 })
 test('chair gets profile tab plus access to all approval and admin routes',async({page})=>{
