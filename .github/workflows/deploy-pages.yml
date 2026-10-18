@@ -1,7 +1,7 @@
 name: Build, verify and deploy KasHima
 on:
   push:
-    branches: [main, react-migration, clarity-v9]
+    branches: [main, react-migration, clarity-v9, profile-mobile-nav-audit-v10]
   workflow_dispatch:
 permissions:
   contents: read
