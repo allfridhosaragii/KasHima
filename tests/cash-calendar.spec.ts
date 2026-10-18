@@ -42,6 +42,7 @@ test('Calendar remains within viewport at mobile through desktop widths in light
    await page.getByRole('switch',{name:'Mode gelap'}).click()
   }
   await page.goto(pageUrl('/pengurus/buku-kas'))
+  await expect(page.locator('.ck-grid button').first()).toBeVisible()
   for(const width of [320,344,360,375,390,414,430,600,768,850,851,1024,1280,1440]){
    await page.setViewportSize({width,height:780})
    const result=await page.evaluate(()=>{
