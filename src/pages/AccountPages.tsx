@@ -9,16 +9,108 @@ async function compressAvatar(file:File):Promise<string>{if(!file.type.startsWit
  const url=URL.createObjectURL(file)
  try{const image=new Image();await new Promise<void>((resolve,reject)=>{image.onload=()=>resolve();image.onerror=()=>reject(new Error('Gambar tidak dapat dibuka.'));image.src=url});const side=512,canvas=document.createElement('canvas');canvas.width=side;canvas.height=side;const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas tidak tersedia');const d=Math.min(image.naturalWidth,image.naturalHeight),sx=(image.naturalWidth-d)/2,sy=(image.naturalHeight-d)/2;ctx.drawImage(image,sx,sy,d,d,0,0,side,side);return canvas.toDataURL('image/webp',0.82)}finally{URL.revokeObjectURL(url)}
 }
-export function Profile(){const {current,state,updateUser,logout,notify}=useDemo();const navigate=useNavigate();const file=useRef<HTMLInputElement>(null);const [editing,setEditing]=useState(false);const [confirmLogout,setConfirmLogout]=useState(false);const [switcher,setSwitcher]=useState(false);const [full,setFull]=useState(current?.name||'');const [nick,setNick]=useState(current?.nickname||'');if(!current)return null
- const staff=current.role!=='member';const paid=state.payments.filter(p=>p.userId===current.id).length;const dues=totalDues(state,current.id)
- const quick= current.role==='chair'?[{to:'/pengurus/persetujuan',icon:<Shield size={20}/>,title:'Persetujuan',meta:'Tinjau usulan dan koreksi'},{to:'/pengurus/akses',icon:<Users size={20}/>,title:'Kelola jenis akun',meta:'Atur peran pengguna'},{to:'/pengurus/laporan',icon:<Layers2 size={20}/>,title:'Laporan kas'}]:current.role==='treasurer'?[{to:'/pengurus/verifikasi',icon:<Check size={20}/>,title:'Verifikasi',meta:'Pembayaran yang perlu diperiksa'},{to:'/pengurus/tunggakan',icon:<Layers2 size={20}/>,title:'Tunggakan anggota'},{to:'/pengurus/buku-kas',icon:<Layers2 size={20}/>,title:'Buku kas'}]:[{to:'/app/riwayat',icon:<Layers2 size={20}/>,title:'Riwayat pembayaran'},{to:'/app/tagihan',icon:<Layers2 size={20}/>,title:'Tagihan kas'},{to:'/app/leaderboard',icon:<Layers2 size={20}/>,title:'Leaderboard'}]
- const submit=(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const name=full.trim().replace(/\s+/g,' '),nickname=nick.trim();if(name.length<3||name.length>75||nickname.length<2||nickname.length>25){notify('Periksa panjang nama lengkap dan panggilan.');return}updateUser(current.id,{name,nickname});setEditing(false);notify('Identitas diperbarui untuk akun demo ini.')}
- const onPhoto=async(e:ChangeEvent<HTMLInputElement>)=>{const photo=e.target.files?.[0];if(!photo)return;try{const avatar=await compressAvatar(photo);updateUser(current.id,{avatar});notify('Foto profil berhasil diperbarui.')}catch(error){notify(error instanceof Error?error.message:'Gambar tidak bisa digunakan.')}e.target.value=''}
- return <div className="content-page profile-page"><PageHead title="Profil" description="Identitas dan ruang pribadimu."/><section className="profile-identity"><div className="profile-avatar-wrap"><Avatar person={current} size="lg"/><button type="button" className="avatar-edit" title="Ubah foto profil" aria-label="Ubah foto profil" onClick={()=>file.current?.click()}><Camera size={18}/></button><input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" ref={file} onChange={onPhoto}/></div><div className="profile-intro"><Overline>KASHIMA / {state.period}</Overline><h2>{current.name}</h2><p>{current.nickname} <span>·</span> {current.nim}</p><RoleBadge user={current}/></div><button type="button" className="button button-secondary edit-profile" onClick={()=>{setFull(current.name);setNick(current.nickname);setEditing(true)}}>Edit profil <ArrowRight size={17}/></button></section>
- <div className="profile-layout"><div className="profile-primary"><section className="plain-section"><SectionHead title="Ringkasan"/><div className="small-stats"><div><span>{staff?'Periode aktif':'Kas terverifikasi'}</span><strong>{staff?state.period:number(paid)}</strong></div><div><span>{staff?'Akses pengurus':'Tagihan terbuka'}</span><strong>{staff?'Aktif':new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(dues)}</strong></div></div></section></div><aside className="profile-secondary"><section className="plain-section"><SectionHead title="Akses cepat"/><div className="quick-list">{quick.map(q=><QuickLink key={q.to} {...q}/>)}</div></section><section className="plain-section"><SectionHead title="Akun & keamanan"/><div className="quick-list"><QuickLink to="/app/pengaturan" icon={<SlidersHorizontal size={20}/>} title="Pengaturan & Glass Studio"/><QuickLink to="/app/bantuan" icon={<CircleHelp size={20}/>} title="Bantuan akun"/></div><button className="simple-action" onClick={()=>setSwitcher(true)}><Users size={18}/> Ganti akun demo <ArrowRight size={17}/></button><button className="simple-action text-danger" onClick={()=>setConfirmLogout(true)}><LogOut size={18}/> Keluar dari akun <ArrowRight size={17}/></button></section></aside></div>
- {editing&&<Modal title="Edit identitas" onClose={()=>setEditing(false)}><form className="form-stack" onSubmit={submit}><FormField label="Nama lengkap"><input autoFocus required maxLength={75} value={full} onChange={e=>setFull(e.target.value)}/></FormField><FormField label="Nama panggilan"><input required maxLength={25} value={nick} onChange={e=>setNick(e.target.value)}/></FormField><div className="modal-actions"><Button kind="secondary" onClick={()=>setEditing(false)}>Batal</Button><Button type="submit">Simpan perubahan</Button></div></form><div className="photo-utility"><button className="subtle-link button-like" type="button" onClick={()=>file.current?.click()}><Camera size={17}/> Ganti foto</button>{current.avatar&&<button className="subtle-link button-like" type="button" onClick={()=>{updateUser(current.id,{avatar:''});notify('Foto profil dihapus.')}}><ImageOff size={17}/> Hapus foto</button>}</div></Modal>}
- {confirmLogout&&<Confirmation title="Keluar dari KasHima?" description="Kamu akan kembali ke halaman masuk demo. Preferensi akun tetap tersimpan di perangkat ini." confirmLabel="Keluar" approve={()=>{logout();navigate('/login')}} onClose={()=>setConfirmLogout(false)}/>}
- {switcher&&<DemoSwitcher onClose={()=>setSwitcher(false)}/>}</div>
+export function Profile(){
+ const {current,state,updateUser,logout,notify}=useDemo()
+ const navigate=useNavigate()
+ const file=useRef<HTMLInputElement>(null)
+ const [editing,setEditing]=useState(false)
+ const [confirmLogout,setConfirmLogout]=useState(false)
+ const [switcher,setSwitcher]=useState(false)
+ const [full,setFull]=useState(current?.name||'')
+ const [nick,setNick]=useState(current?.nickname||'')
+ if(!current)return null
+
+ const paidMonths=state.obligations.filter(x=>x.userId===current.id&&x.status==='paid').length
+ const dues=totalDues(state,current.id)
+ const workPending=current.role==='chair'
+  ?state.proposals.filter(x=>x.status==='submitted').length
+  :state.intents.filter(x=>x.status==='pending').length
+ const quick=current.role==='chair'
+  ?[{to:'/pengurus/persetujuan',icon:<Shield size={19}/>,title:'Persetujuan',meta:'Usulan dan koreksi'},
+    {to:'/pengurus/akses',icon:<Users size={19}/>,title:'Kelola jenis akun',meta:'Hak akses pengguna'},
+    {to:'/pengurus/laporan',icon:<Layers2 size={19}/>,title:'Laporan kas'}]
+  :current.role==='treasurer'
+  ?[{to:'/pengurus/verifikasi',icon:<Check size={19}/>,title:'Verifikasi',meta:'Periksa pembayaran'},
+    {to:'/pengurus/tunggakan',icon:<Layers2 size={19}/>,title:'Tunggakan anggota'},
+    {to:'/pengurus/buku-kas',icon:<Layers2 size={19}/>,title:'Buku kas'}]
+  :[{to:'/app/riwayat',icon:<Layers2 size={19}/>,title:'Riwayat pembayaran'},
+    {to:'/app/tagihan',icon:<Layers2 size={19}/>,title:'Tagihan kas'},
+    {to:'/app/leaderboard',icon:<Layers2 size={19}/>,title:'Leaderboard'}]
+
+ const submit=(e:FormEvent<HTMLFormElement>)=>{
+  e.preventDefault()
+  const name=full.trim().replace(/\s+/g,' '),nickname=nick.trim()
+  if(name.length<3||name.length>75||nickname.length<2||nickname.length>25){
+   notify('Periksa panjang nama lengkap dan panggilan.')
+   return
+  }
+  updateUser(current.id,{name,nickname})
+  setEditing(false)
+  notify('Profil akun demo diperbarui.')
+ }
+ const onPhoto=async(e:ChangeEvent<HTMLInputElement>)=>{
+  const photo=e.target.files?.[0]
+  if(!photo)return
+  try{
+   const avatar=await compressAvatar(photo)
+   updateUser(current.id,{avatar})
+   notify('Foto profil diperbarui.')
+  }catch(error){notify(error instanceof Error?error.message:'Gambar tidak bisa digunakan.')}
+  e.target.value=''
+ }
+ return <div className="content-page profile-page">
+  <PageHead title="Profil"/>
+  <section className="profile-identity" aria-label="Identitas akun">
+   <div className="profile-avatar-wrap">
+    <Avatar person={current} size="lg"/>
+    <button type="button" className="avatar-edit" title="Ubah foto profil" aria-label="Ubah foto profil" onClick={()=>file.current?.click()}><Camera size={18}/></button>
+    <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" ref={file} onChange={onPhoto}/>
+   </div>
+   <div className="profile-intro">
+    <h2>{current.name}</h2>
+    <p className="profile-nickname">{current.nickname}</p>
+    <p className="profile-identity-meta">NIM {current.nim} <span aria-hidden="true">·</span> Angkatan {current.year}</p>
+    <RoleBadge user={current}/>
+   </div>
+   <button type="button" className="button button-secondary edit-profile" onClick={()=>{setFull(current.name);setNick(current.nickname);setEditing(true)}}>Edit profil <ArrowRight size={17}/></button>
+  </section>
+  <div className="profile-layout">
+   <section className="plain-section profile-summary">
+    <SectionHead title="Ringkasan"/>
+    <div className="small-stats">
+     {current.role==='member'
+      ?<><div><span>Bulan lunas</span><strong>{paidMonths}</strong></div><div><span>Tagihan terbuka</span><strong>{new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(dues)}</strong></div></>
+      :<><div><span>{current.role==='chair'?'Menunggu persetujuan':'Menunggu verifikasi'}</span><strong>{workPending}</strong></div><div><span>Periode kepengurusan</span><strong>{state.period}</strong></div></>}
+    </div>
+   </section>
+   <section className="plain-section">
+    <SectionHead title="Akses cepat"/>
+    <div className="quick-list">{quick.map(q=><QuickLink key={q.to} {...q}/>)}</div>
+   </section>
+   <section className="plain-section">
+    <SectionHead title="Akun & keamanan"/>
+    <div className="quick-list">
+     <QuickLink to="/app/pengaturan" icon={<SlidersHorizontal size={19}/>} title="Pengaturan & Glass Studio"/>
+     <QuickLink to="/app/bantuan" icon={<CircleHelp size={19}/>} title="Bantuan akun"/>
+    </div>
+    <button type="button" className="simple-action" onClick={()=>setSwitcher(true)}><Users size={18}/> <span>Ganti akun demo</span><ArrowRight size={17}/></button>
+    <button type="button" className="simple-action text-danger" onClick={()=>setConfirmLogout(true)}><LogOut size={18}/> <span>Keluar dari akun</span><ArrowRight size={17}/></button>
+   </section>
+  </div>
+  {editing&&<Modal title="Edit profil" onClose={()=>setEditing(false)}>
+   <form className="form-stack" onSubmit={submit}>
+    <FormField label="Nama lengkap"><input autoFocus required maxLength={75} value={full} onChange={e=>setFull(e.target.value)}/></FormField>
+    <FormField label="Nama panggilan"><input required maxLength={25} value={nick} onChange={e=>setNick(e.target.value)}/></FormField>
+    <div className="modal-actions"><Button kind="secondary" onClick={()=>setEditing(false)}>Batal</Button><Button type="submit">Simpan perubahan</Button></div>
+   </form>
+   <div className="photo-utility">
+    <button className="subtle-link button-like" type="button" onClick={()=>file.current?.click()}><Camera size={17}/> Ganti foto</button>
+    {current.avatar&&<button className="subtle-link button-like" type="button" onClick={()=>{updateUser(current.id,{avatar:''});notify('Foto profil dihapus.')}}><ImageOff size={17}/> Hapus foto</button>}
+   </div>
+  </Modal>}
+  {confirmLogout&&<Confirmation title="Keluar dari KasHima?" description="Kamu akan kembali ke halaman masuk demo. Preferensi akun tetap tersimpan di perangkat ini." confirmLabel="Keluar" approve={()=>{logout();navigate('/login')}} onClose={()=>setConfirmLogout(false)}/>}
+  {switcher&&<DemoSwitcher onClose={()=>setSwitcher(false)}/>}
+ </div>
 }
 export function DemoSwitcher({onClose}:{onClose:()=>void}){const {state,login,notify}=useDemo();const navigate=useNavigate();return <Modal title="Pilih akun demo" onClose={onClose}><p className="muted small">Hanya untuk menguji antarmuka berbagai peran. Pergantian ini bukan pemberian hak akses sungguhan.</p><div className="account-options">{state.users.filter(u=>u.status==='active').map(u=><button className="account-option" key={u.id} onClick={()=>{login(u.id);onClose();navigate(u.role==='member'?'/app':u.role==='chair'?'/pengurus/persetujuan':'/pengurus/keuangan');notify(`Masuk sebagai ${u.nickname} (${roleTitle(u.role)})`)}}><Avatar person={u} size="sm"/><span><strong>{u.name}</strong><small>{roleTitle(u.role)} · {u.nim}</small></span><ArrowRight size={17}/></button>)}</div></Modal>}
 const presets:{id:GlassPreset,label:string,description:string,blur:number}[]=[{id:'solid',label:'Solid',description:'Tajam dan paling ringan',blur:0},{id:'satin',label:'Satin',description:'Kaca sangat lembut',blur:8},{id:'frost',label:'Frost',description:'Seimbang dan elegan',blur:16},{id:'crystal',label:'Crystal',description:'Kaca lebih ekspresif',blur:22}]
