@@ -27,7 +27,7 @@ async function asRole(page:Page,name:RegExp){
 }
 test('member pages and four mobile destinations stay legible',async({page})=>{
  for(const route of memberRoutes)await check(page,route)
- await expect(page.locator('.bottom-nav .bottom-item')).toHaveCount(4)
+ await expect(page.locator('.bottom-nav .bottom-item')).toHaveCount(5)
 })
 test('member payment waiting and success guard remain intact',async({page})=>{
  await page.goto(at('/app/tagihan'))
