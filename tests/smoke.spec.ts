@@ -14,7 +14,8 @@ test('profile is clean and account status is shown, without removed labels',asyn
  await expect(page.getByText('Akun aktif')).toBeVisible()
  await expect(page.getByText('MODE PRATINJAU')).toHaveCount(0)
  await expect(page.getByText('01 / IDENTITAS')).toHaveCount(0)
- await expect(page.getByText('Informasi pribadi')).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Informasi pribadi'})).toHaveCount(0)
+ await expect(page.getByRole('heading',{name:'Ringkasan'})).toBeVisible()
 })
 
 test('Glass Studio slider updates actual blur and persists for current demo account',async({page})=>{
@@ -80,5 +81,21 @@ test('mobile and desktop layouts have no global horizontal overflow',async({page
    console.log(`Overflow details on ${path}: ${JSON.stringify(offenders)}`)
   }
   expect(overflow,`overflow on ${path}`).toBeLessThanOrEqual(2)
+ }
+})
+
+
+test('private-information panel is removed for all role profiles', async ({ page }) => {
+ for (const role of [null, /Hana Putri/, /Kirana Laras/]) {
+  await page.goto(url('/app/profil'))
+  if (role) {
+   await page.getByRole('button', { name: 'Ganti akun demo' }).click()
+   await page.getByRole('button', { name: role }).click()
+  }
+  await page.goto(url('/app/profil'))
+  await expect(page.getByRole('heading', { name: 'Informasi pribadi' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Ringkasan' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Edit profil' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Keluar dari akun' })).toBeVisible()
  }
 })
