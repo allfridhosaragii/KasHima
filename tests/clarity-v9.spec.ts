@@ -45,7 +45,8 @@ test('Kahima: all governance routes and primary approvals link fit',async({page}
  await loginAs(page,/Kirana Laras/)
  for(const r of chair)await fit(page,r)
  await page.goto(at('/pengurus/persetujuan'))
- await expect(page.locator('.bottom-nav').getByRole('link',{name:'Persetujuan'})).toBeVisible()
+ if((page.viewportSize()?.width??390)<=850)await expect(page.locator('.bottom-nav').getByRole('link',{name:'Persetujuan'})).toBeVisible()
+ else await expect(page.locator('.sidebar').getByRole('link',{name:'Persetujuan'})).toBeVisible()
 })
 test('QRIS intent pending and blocked success remain safe',async({page})=>{
  await page.goto(at('/app/tagihan'))

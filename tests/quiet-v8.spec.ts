@@ -44,7 +44,7 @@ test('treasurer all operational routes fit phone',async({page})=>{
  await expect(page.locator('html')).toHaveAttribute('data-workspace','treasurer')
  for(const route of financeRoutes)await check(page,route)
  await page.goto(at('/pengurus/keuangan'))
- await expect(page.getByText('TRANSAKSI MENUNGGU')).toBeVisible()
+ await expect(page.getByText('Perlu diperiksa')).toBeVisible()
 })
 test('chair administration pages fit phone and prioritise approvals',async({page})=>{
  await asRole(page,/Kirana Laras/)
